@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student - Live Practice</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #120822 0%, #1e1038 50%, #0f071f 100%); color: #cbd5e1; padding: 20px; min-height: 100vh; position: relative; }
+        .watermark-logo { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 820px; height: 820px; mix-blend-mode: screen; opacity: 0.1; z-index: -1; pointer-events: none; object-fit: contain; filter: drop-shadow(0 0 24px rgba(96, 165, 250, 0.4)) brightness(1.1) blur(2px); }
+        .wrap { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+        .card { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        h1 { font-size: 22px; margin-bottom: 6px; color: #fff; } h2 { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; } .info { font-size: 13px; color: #94a3b8; } .right-bar { display: flex; gap: 10px; align-items: center; }
+        .lang-switch { display: flex; gap: 4px; } .lang-switch button { padding: 4px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; } .lang-switch button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .btn-change-pwd { padding: 4px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tabs button { padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 8px; cursor: pointer; font-size: 14px; flex-shrink: 0; color: #cbd5e1; transition: all 0.3s; }
+        .tabs button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .date-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+        .date-bar button { flex: 1; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 13px; color: #cbd5e1; }
+        .date-bar button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .room-col { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); }
+        .room-col h3 { font-size: 15px; text-align: center; margin-bottom: 4px; color: #fff; }
+        .room-col .room-loc { font-size: 11px; line-height: 1.4; text-align: center; color: #93c5fd; margin-bottom: 10px; padding: 0 2px; word-break: break-all; }
+        .slot { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 13px; text-align: center; }
+        .slot.available { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); cursor: pointer; }
+        .slot.available:hover { background: rgba(16,185,129,0.2); }
+        .slot.booked { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); cursor: not-allowed; }
+        .slot.unavailable { border-color: rgba(100,116,139,0.3); background: rgba(100,116,139,0.1); color: #64748b; cursor: not-allowed; }
+        .slot .time { font-weight: 600; color: #fff; }
+        .slot .status { margin-top: 6px; color: #94a3b8; font-size: 12px; }
+        .slot.booked .status { color: #fca5a5; }
+        .slot.available .status { color: #6ee7b7; }
+        .booking-item { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 16px; margin-bottom: 12px; background: rgba(0,0,0,0.2); }
+        .booking-item .title { font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #fff; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; font-weight: normal; }
+        .tag.blue { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .tag.green { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag.red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .tag.gray { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.3); }
+        .tag.orange { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .desc { font-size: 13px; color: #cbd5e1; margin: 6px 0; line-height: 1.6; }
+        .member-row { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; font-size: 13px; flex-wrap: wrap; border: 1px solid rgba(255,255,255,0.1); }
+        .member-row.self { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); }
+        .member-row .name { font-weight: 600; min-width: 60px; color: #fff; }
+        .member-row .no { color: #94a3b8; min-width: 120px; font-size: 12px; }
+        .member-row input { flex: 1; min-width: 100px; padding: 6px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 16px; color: #fff; }
+        .member-row button { padding: 4px 8px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        button.sm { padding: 8px 14px; font-size: 13px; border-radius: 6px; border: none; cursor: pointer; background: #3b82f6; color: #fff; transition: all 0.3s; font-weight: 500; }
+        button.sm:hover { background: #2563eb; }
+        button.sm.gray { background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
+        button.sm.gray:hover { background: rgba(255,255,255,0.2); }
+        button.sm.red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+        button.sm.orange { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .modal { position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100dvh; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 10px; }
+        .modal .box { background: rgba(30, 16, 56, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,.5); border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; max-height: 90dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        /* ===== 课程选择器（移动端友好，替代 datalist）===== */
+        .picker-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 16px; color: #fff; cursor: pointer; min-height: 46px; }
+        .picker-trigger.empty { color: #94a3b8; }
+        .picker-trigger .arrow { color: #60a5fa; font-size: 12px; flex-shrink: 0; }
+        .picker-modal { position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100dvh; background: rgba(0,0,0,.65); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+        .picker-panel { background: #1a0f33; border-top-left-radius: 18px; border-top-right-radius: 18px; width: 100%; max-width: 560px; height: 72%; max-height: 82vh; max-height: 82dvh; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,0.15); box-shadow: 0 -10px 40px rgba(0,0,0,.5); }
+        .picker-head { padding: 12px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        .picker-head input { flex: 1; padding: 11px 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.35); border-radius: 8px; font-size: 16px; color: #fff; font-family: inherit; }
+        .picker-head input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
+        .picker-head button { padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: #cbd5e1; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+        .picker-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 6px 8px 20px; }
+        .picker-item { padding: 12px 12px; border-radius: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; }
+        .picker-item:active { background: rgba(59,130,246,0.25); }
+        .picker-item.on { background: rgba(59,130,246,0.22); border-color: rgba(59,130,246,0.5); }
+        .picker-item .c-name { font-size: 15px; color: #fff; margin-bottom: 4px; line-height: 1.35; }
+        .picker-item .c-meta { font-size: 12px; color: #94a3b8; }
+        .picker-empty { text-align: center; color: #64748b; padding: 26px 10px; font-size: 14px; }
+        .modal h3 { font-size: 18px; margin-bottom: 16px; color: #fff; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 6px; }
+        .field input, .field select, .field textarea { width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 16px; font-family: inherit; color: #fff; }
+        .field textarea { min-height: 80px; resize: vertical; }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #3b82f6; background: rgba(0,0,0,0.5); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: rgba(17, 24, 39, 0.9); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 100000; font-size: 14px; box-shadow: 0 10px 25px rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,0.1); max-width: 90vw; word-break: break-word; text-align: center; }
+        .toast.err { background: rgba(220, 38, 38, 0.9); border-color: #f87171; }
+        .toast.ok { background: rgba(5, 150, 105, 0.9); border-color: #34d399; }
+        .empty { text-align: center; color: #64748b; padding: 30px; font-size: 14px; }
+        #loadingOverlay { position: fixed; inset: 0; background: #0f071f; z-index: 999999; display: flex; justify-content: center; align-items: center; font-size: 16px; color: #94a3b8; }
+        .quote-banner { display:none; margin-bottom:16px; padding:14px 18px; background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(10px); border-left:4px solid #3b82f6; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,.2); border-top: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);}
+        .restrict-banner { display:none; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; padding:14px 16px; background: rgba(220,38,38,.14); border:1px solid rgba(248,113,113,.45); border-left:4px solid #f87171; border-radius:10px; color:#fecaca; font-size:13px; line-height:1.6; flex-wrap:wrap; }
+        .restrict-banner b { color:#fff; }
+        .restrict-banner button { padding:7px 14px; background:#dc2626; color:#fff; border:none; border-radius:8px; font-size:13px; cursor:pointer; white-space:nowrap; font-family:inherit; }
+        .restrict-item { padding:10px 12px; border-radius:8px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.1); margin-bottom:8px; font-size:13px; color:#e2e8f0; }
+        .restrict-item .ri-title { color:#fff; font-weight:600; margin-bottom:3px; }
+        .restrict-item .ri-meta { color:#fca5a5; font-size:12px; line-height:1.5; }
+        .restrict-remind { padding:10px 12px; border-radius:8px; background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); margin-bottom:8px; font-size:13px; color:#fde68a; line-height:1.6; }
+        .restrict-remind .rr-head { font-size:12px; color:#fcd34d; margin-bottom:2px; }
+        @media (max-width: 768px) { body { padding: 15px; } .topbar { flex-direction: column; align-items: flex-start; gap: 12px; } .right-bar { width: 100%; justify-content: space-between; } .board { grid-template-columns: 1fr; } .modal { padding: 0; align-items: flex-end; } .modal .box { padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); max-width: 100%; border-radius: 18px 18px 0 0; max-height: 100%; } .modal .box h3 { position: sticky; top: -20px; background: rgba(30,16,56,0.99); padding: 4px 0 10px; margin: -4px 0 12px; z-index: 2; } .modal-actions { position: sticky; bottom: -20px; background: rgba(30,16,56,0.99); padding: 12px 0 4px; margin-top: 12px; } }
+    </style>
+</head>
+<body>
+<img class="watermark-logo" src="/logo.png" alt="院徽水印">
+<div id="loadingOverlay">正在加载数据，请稍候...</div>
+
+<div class="wrap">
+    <div id="quoteBanner" class="quote-banner">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:13px; color:#cbd5e1; font-style:italic;">💡 <span id="quoteContentInner"></span></div>
+            <div style="font-size:12px; color:#94a3b8;">—— <span id="quoteAuthorInner"></span> <span style="color:#60a5fa; margin-left:8px; cursor:pointer; user-select:none;" onclick="loadRandomQuote()">🔄 点击换一条</span></div>
+        </div>
+    </div>
+
+    <div id="restrictBanner" class="restrict-banner">
+        <div id="restrictBannerText" style="flex:1;min-width:180px"></div>
+        <button onclick="showRestrictModal()" id="restrictBannerBtn">查看详情</button>
+    </div>
+
+    <div class="card">
+        <div class="topbar">
+            <div><h1 id="t-pageTitle">🎓 学生端 · 直播实践管理</h1><div class="info" id="userInfo"></div></div>
+            <div class="right-bar">
+                <div class="lang-switch"><button id="btn-zh" class="on" onclick="setLang('zh')">中文</button><button id="btn-en" onclick="setLang('en')">EN</button></div>
+                <button class="btn-change-pwd" id="t-btnChangePwd" onclick="showChangePasswordModal()">修改密码</button>
+                <a href="javascript:void(0)" onclick="doLogout()" id="t-logout" style="color:#60a5fa;font-size:14px;text-decoration:none">← 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="on" data-tab="board" id="t-tabBoard">预约看板</button>
+        <button data-tab="my" id="t-tabMy">我的预约</button>
+    </div>
+
+    <div class="card" id="panel-board">
+        <div class="date-bar">
+            <button data-date="today" class="on" id="t-today">今天</button>
+            <button data-date="tomorrow" id="t-tomorrow">明天</button>
+            <button data-date="dayafter" id="t-dayAfter">后天</button>
+        </div>
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="card" id="panel-my" style="display:none">
+        <h2 id="t-myTitle">我的预约</h2>
+        <div id="myList"></div>
+    </div>
+</div>
+
+<script>
+    const I18N = {
+        zh: { pageTitle:'🎓 学生端', logout:'← 退出', changePwd:'修改密码', tabBoard:'预约看板', tabMy:'我的预约', today:'今天', tomorrow:'明天', dayAfter:'后天', myTitle:'我的预约', room:'直播间', available:'可预约', booked:'已被约', unavailable:'不可预约', nightClosed:'夜间不开放', course:'课程', members:'小组成员', netdisk:'网盘链接', notSubmitted:'未提交', myScore:'我的分数', cancelBooking:'取消预约', submitNetdisk:'提交网盘链接', confirmCancel:'确定取消该预约？', cancelled:'已取消', bookTitle:'预约直播间', selectCourse:'请选择课程', courseLabel:'课程', membersLabel:'小组成员及职责', selfTag:'（我）', addMember:'+ 添加组员', dutyPlaceholder:'职责', inputStudentNo:'请输入组员学号', memberSelf:'不能添加自己', memberDup:'该学号已在列表中', cancel:'取消', submitBooking:'提交预约', submit:'提交', pleaseSelectCourse:'请选择课程', pleaseAddMember:'请至少添加一名组员', pleaseFillDuty:'请填写组员职责', bookingSuccess:'预约成功', pleaseInputLink:'请输入链接', uploadSuccess:'已提交', noBooking:'暂无预约', stCancelled:'已取消', stScored:'已打分', stRejected:'已驳回', stPendingScore:'待打分', stPendingConfirm:'已提交·待确认', stOverdue:'已逾期', stPendingUpload:'待上传', stBooked:'已预约', liveHintBefore:'直播结束后可提交网盘链接', preApplyBtn:'申请提前提交', preApplyTitle:'申请提前提交网盘链接', preApplyReason:'申请原因', preApplyPlaceholder:'请说明为什么需要提前提交', preApplySubmit:'提交申请', preApplySuccess:'申请已提交', preApproved:'已批准 · 可提前提交', prePending:'提前提交申请审批中', preRejected:'提前提交申请已拒绝', preReApply:'重新申请', rejectedHint:'网盘链接被驳回，请重新提交', scoreTimeoutTag:'打分超时 · 待重新提交', scoreTimeoutHint:'教师确认后 3 天内未完成打分，网盘链接已作废', noSubmitTimeoutHint:'已超过 3 天未提交网盘链接，预约功能已暂停', cpTitle:'修改密码', cpHint:'设置新密码（至少 6 位）', cpOld:'原密码', cpNew:'新密码', cpConfirm:'确认新密码', cpSubmit:'提交修改', cpFillAll:'请填写所有字段', cpMismatch:'新密码不一致', cpTooShort:'新密码至少 6 位', cpSuccess:'密码修改成功', removeMember:'移除', paTitle:'申请修改密码', paHint:'修改密码需要管理员审批', paOld:'原密码', paNew:'新密码', paConfirm:'确认新密码', paReason:'申请原因', paSubmit:'提交申请', paSuccess:'申请已提交', restrictTitle:'⚠️ 预约功能已暂停', restrictIntro:'以下直播已超过 3 天未提交网盘链接。请先提交链接，并等任课教师确认后，即可继续预约直播间。', restrictClose:'知道了', restrictGo:'去提交网盘链接', restrictBannerPre:'⚠️ 您有 ', restrictBannerPost:' 条预约超过 3 天未提交网盘，预约功能已暂停', restrictRemindMark:' · 教师已提醒', remindTitle:'教师提醒', stLate:'逾期未提交 · 已暂停预约', stLatePending:'逾期补交 · 待教师确认', stRejectedBlock:'被驳回 · 需重新提交', reasonRejected:'网盘链接被驳回，需重新提交', reasonLate:'逾期提交，等待教师确认', reasonOverdue:'已逾期 ', reasonOverdue2:' 天未提交' },
+        en: { pageTitle:'🎓 Student', logout:'← Logout', changePwd:'Change Pwd', tabBoard:'Board', tabMy:'My Bookings', today:'Today', tomorrow:'Tomorrow', dayAfter:'Day After', myTitle:'My Bookings', room:'Room', available:'Available', booked:'Booked', unavailable:'Unavailable', nightClosed:'Closed at night', course:'Course', members:'Members', netdisk:'Netdisk', notSubmitted:'Not submitted', myScore:'My Score', cancelBooking:'Cancel Booking', submitNetdisk:'Submit Link', confirmCancel:'Cancel this booking?', cancelled:'Cancelled', bookTitle:'Book Room', selectCourse:'Select a course', courseLabel:'Course', membersLabel:'Members', selfTag:'(Me)', addMember:'+ Add Member', dutyPlaceholder:'Duty', inputStudentNo:'Enter student ID', memberSelf:'Cannot add yourself', memberDup:'Already added', cancel:'Cancel', submitBooking:'Submit', submit:'Submit', pleaseSelectCourse:'Select a course', pleaseAddMember:'Add at least one member', pleaseFillDuty:'Fill in duties', bookingSuccess:'Booking successful', pleaseInputLink:'Enter a link', uploadSuccess:'Submitted', noBooking:'No bookings', stCancelled:'Cancelled', stScored:'Scored', stRejected:'Rejected', stPendingScore:'Pending Score', stPendingConfirm:'Submitted·Pending', stOverdue:'Overdue', stPendingUpload:'Pending Upload', stBooked:'Booked', liveHintBefore:'Submit link after live ends', preApplyBtn:'Request Early Submit', preApplyTitle:'Request Early Submission', preApplyReason:'Reason', preApplyPlaceholder:'Explain why', preApplySubmit:'Submit Request', preApplySuccess:'Request submitted', preApproved:'Approved', prePending:'Pending', preRejected:'Rejected', preReApply:'Re-apply', rejectedHint:'Link rejected', scoreTimeoutTag:'Score Timeout', scoreTimeoutHint:'Teacher did not score', noSubmitTimeoutHint:'Over 3 days without submission. Booking paused.', cpTitle:'First Login: Change Password', cpHint:'Set a new password', cpOld:'Current Password', cpNew:'New Password', cpConfirm:'Confirm', cpSubmit:'Submit', cpFillAll:'Fill all fields', cpMismatch:'Passwords do not match', cpTooShort:'Password too short', cpSuccess:'Password changed', removeMember:'Remove', paTitle:'Request Password Change', paHint:'Requires admin approval.', paOld:'Current', paNew:'New', paConfirm:'Confirm', paReason:'Reason', paSubmit:'Submit', paSuccess:'Request submitted', restrictTitle:'⚠️ Booking paused', restrictIntro:'These live sessions are over 3 days without a netdisk link. Submit the link and wait for your teacher to confirm, then booking resumes.', restrictClose:'OK', restrictGo:'Submit link', restrictBannerPre:'⚠️ You have ', restrictBannerPost:' booking(s) over 3 days without submission. Booking is paused.', restrictRemindMark:' · reminded by teacher', remindTitle:'Teacher reminder', stLate:'Overdue · booking paused', stLatePending:'Late submission · awaiting teacher', stRejectedBlock:'Rejected · resubmit needed', reasonRejected:'Link rejected, please resubmit', reasonLate:'Late submission, awaiting teacher', reasonOverdue:'Overdue ', reasonOverdue2:' day(s)' }
+    };
+    let lang = localStorage.getItem('lang') || 'zh'; const T = k => I18N[lang][k] || k; let user = null; let currentDate = getToday(); let courses = []; let selectedMembers = []; let pickedCourse = null;
+    // 预约限制状态：逾期未提交网盘 → 暂停预约，教师确认后解除
+    let restriction = { restricted: false, items: [], reminders: [] };
+    function getToday() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getTomorrow() { const d = new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getDayAfter() { const d = new Date(); d.setDate(d.getDate()+2); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function dateFromKey(k) { return k === 'tomorrow' ? getTomorrow() : (k === 'dayafter' ? getDayAfter() : getToday()); }
+    function showToast(msg, isErr) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast ' + (isErr ? 'err' : 'ok'); t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+    function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    function setLang(l) { lang = l; localStorage.setItem('lang', l); document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en'; applyI18N(); if (typeof renderRestrictBanner === 'function') renderRestrictBanner(); if (user) { const a = document.querySelector('.tabs button.on'); if (a) { if (a.dataset.tab === 'board') loadBoard(); else if (a.dataset.tab === 'my') loadMyBookings(); } } }
+    function applyI18N() { document.getElementById('t-pageTitle').innerText = T('pageTitle'); document.getElementById('t-logout').innerText = T('logout'); document.getElementById('t-btnChangePwd').innerText = T('changePwd'); document.getElementById('t-tabBoard').innerText = T('tabBoard'); document.getElementById('t-tabMy').innerText = T('tabMy'); document.getElementById('t-today').innerText = T('today'); document.getElementById('t-tomorrow').innerText = T('tomorrow'); const tda = document.getElementById('t-dayAfter'); if (tda) tda.innerText = T('dayAfter'); document.getElementById('t-myTitle').innerText = T('myTitle'); document.getElementById('btn-zh').classList.toggle('on', lang === 'zh'); document.getElementById('btn-en').classList.toggle('on', lang === 'en'); }
+
+    document.querySelectorAll('.tabs button').forEach(b => { b.onclick = () => { document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on'); const t = b.dataset.tab; document.getElementById('panel-board').style.display = t === 'board' ? 'block' : 'none'; document.getElementById('panel-my').style.display = t === 'my' ? 'block' : 'none'; if (t === 'my') loadMyBookings(); }; });
+    document.querySelectorAll('.date-bar button').forEach(b => { b.onclick = () => { document.querySelectorAll('.date-bar button').forEach(x => x.classList.remove('on')); b.classList.add('on'); currentDate = dateFromKey(b.dataset.date); loadBoard(); }; });
+    async function doLogout() { await fetch('/api/logout', { method: 'POST' }); location.href = '/?timeout=1'; }
+
+    async function loadBoard() {
+        const res = await fetch('/api/board?college=' + encodeURIComponent(user.college) + '&date=' + currentDate); const data = await res.json();
+        const wrap = document.getElementById('board'); wrap.innerHTML = '';
+        data.board.forEach(roomData => {
+            const col = document.createElement('div'); col.className = 'room-col'; col.innerHTML = '<h3>' + T('room') + ' ' + roomData.room + '</h3>' + (roomData.location ? '<div class="room-loc" title="' + escapeHtml(roomData.location) + '">📍 ' + escapeHtml(roomData.location) + '</div>' : '');
+            roomData.slots.forEach(slot => {
+                const div = document.createElement('div'); let cls, st;
+                if (slot.status === 'unavailable') { cls = 'unavailable'; st = slot.nightClosed ? T('nightClosed') : T('unavailable'); }
+                else if (slot.status === 'booked' && slot.booking) { cls = 'booked'; st = T('booked') + ' · ' + slot.booking.studentName + (slot.booking.className ? ' (' + slot.booking.className + ')' : ''); }
+                else { cls = 'available'; st = T('available'); }
+                div.className = 'slot ' + cls;
+                div.innerHTML = '<div class="time">' + slot.startTime + ' - ' + slot.endTime + '</div><div class="status">' + st + '</div>';
+                if (slot.status === 'available') div.onclick = () => openBookingModal(slot);
+                col.appendChild(div);
+            });
+            wrap.appendChild(col);
+        });
+    }
+
+    async function loadCourses() { const res = await fetch('/api/courses'); const data = await res.json(); courses = data.courses || []; }
+
+    // ---- 逾期未提交：预约限制 + 教师催交通知 ----
+    function goTab(name) { const b = document.querySelector('.tabs button[data-tab="' + name + '"]'); if (b) b.click(); }
+    function restrictReason(it) {
+        const days = Number(it.overdue_days || 0);
+        if (it.netdisk_url) return T('reasonLate');
+        return T('reasonOverdue') + days + T('reasonOverdue2');
+    }
+    async function loadRestriction() {
+        if (!user) return restriction;
+        try {
+            const res = await fetch('/api/student/restriction?userId=' + encodeURIComponent(user.id) + '&t=' + Date.now());
+            if (!res.ok) return restriction;
+            const data = await res.json();
+            restriction = { restricted: !!data.restricted, items: data.items || [], reminders: data.reminders || [] };
+        } catch (e) { /* 网络异常时保持上次状态，不阻塞页面 */ }
+        renderRestrictBanner();
+        return restriction;
+    }
+    function renderRestrictBanner() {
+        const box = document.getElementById('restrictBanner'); if (!box) return;
+        const n = restriction.items.length, rn = restriction.reminders.length;
+        const btn = document.getElementById('restrictBannerBtn');
+        if (btn) btn.innerText = lang === 'zh' ? '查看详情' : 'Details';
+        if (!n && !rn) { box.style.display = 'none'; return; }
+        let txt;
+        if (n) txt = T('restrictBannerPre') + '<b>' + n + '</b>' + T('restrictBannerPost');
+        else txt = (lang === 'zh' ? '⚠️ 您有 ' : '⚠️ You have ') + '<b>' + rn + '</b>' + (lang === 'zh' ? ' 条教师催交提醒' : ' reminder(s) from teacher');
+        const box2 = document.getElementById('restrictBannerText');
+        if (box2) box2.innerHTML = txt;
+        box.style.display = 'flex';
+    }
+    function showRestrictModal() {
+        const old = document.getElementById('restrictModal'); if (old) old.remove();
+        const items = restriction.items || [], rems = restriction.reminders || [];
+        const itemsHtml = items.map(it => `
+            <div class="restrict-item">
+                <div class="ri-title">${T('room')} ${escapeHtml(it.room || '')} · ${String(it.date || '').slice(0, 10)} ${escapeHtml(it.st || '')}-${escapeHtml(it.et || '')}</div>
+                <div class="ri-meta">${escapeHtml(it.course || '')} · ${escapeHtml(restrictReason(it))}</div>
+            </div>`).join('');
+        const remsHtml = rems.length
+            ? `<div style="margin:16px 0 8px;font-size:14px;font-weight:600;color:#fbbf24">📣 ${T('remindTitle')}</div>` + rems.map(r => `
+                <div class="restrict-remind">
+                    <div class="rr-head">${escapeHtml(r.teacher_name || '')} · ${String(r.created_at || '').slice(0, 16)}</div>
+                    ${escapeHtml(r.content || '')}
+                </div>`).join('')
+            : '';
+        const html = `<div class="modal" id="restrictModal"><div class="box">
+            <h3>${T('restrictTitle')}</h3>
+            <p style="font-size:13px;color:#cbd5e1;margin:0 0 14px;line-height:1.7">${T('restrictIntro')}</p>
+            ${itemsHtml}${remsHtml}
+            <div class="modal-actions">
+                <button class="sm gray" onclick="closeRestrictModal()">${T('restrictClose')}</button>
+                ${items.length ? `<button class="sm" onclick="closeRestrictModal();goTab('my')">${T('restrictGo')}</button>` : ''}
+            </div>
+        </div></div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        fitModalsToViewport();
+        markRemindersRead();
+    }
+    function closeRestrictModal() { const m = document.getElementById('restrictModal'); if (m) m.remove(); }
+    function markRemindersRead() {
+        if (!restriction.reminders.length) return;
+        restriction.reminders = [];
+        renderRestrictBanner();
+        fetch('/api/student/reminders/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) }).catch(() => { });
+    }
+
+    function openBookingModal(slot) {
+        if (restriction.restricted) { showRestrictModal(); return; }
+        pickedCourse = null; selectedMembers = [{ studentNo: user.id, name: user.name, className: user.className || '', duty: '', self: true }]; renderBookingModal(slot);
+    }
+
+    // ---- 课程选择器（移动端可用：可点选、可搜索，不依赖 datalist）----
+    function courseTriggerHtml() {
+        const inner = pickedCourse
+            ? `<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(pickedCourse.name)}</span><span style="font-size:12px;color:#94a3b8;flex-shrink:0">#${escapeHtml(pickedCourse.id)}</span>`
+            : `<span>${T('selectCourse')}</span>`;
+        return `<div class="picker-trigger ${pickedCourse ? '' : 'empty'}" onclick="openCoursePicker()">${inner}<span class="arrow">▾</span></div>`;
+    }
+    function openCoursePicker() {
+        const old = document.getElementById('coursePickerModal'); if (old) old.remove();
+        const html = `<div class="picker-modal" id="coursePickerModal"><div class="picker-panel"><div class="picker-head"><input id="courseSearchInput" type="search" enterkeyhint="search" placeholder="搜索课程名称 / 课程号 / 教师" autocomplete="off"><button onclick="closeCoursePicker()">取消</button></div><div class="picker-list" id="coursePickerList"></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        const inp = document.getElementById('courseSearchInput');
+        inp.addEventListener('input', () => renderCourseList(inp.value));
+        renderCourseList('');
+        fitModalsToViewport();
+    }
+    function renderCourseList(kw) {
+        const box = document.getElementById('coursePickerList'); if (!box) return;
+        const q = String(kw || '').trim().toLowerCase();
+        const list = !q ? courses : courses.filter(c => (String(c.name || '') + ' ' + String(c.id || '') + ' ' + String(c.teacher_name || '') + ' ' + String(c.teacher_id || '')).toLowerCase().indexOf(q) >= 0);
+        if (!list.length) { box.innerHTML = `<div class="picker-empty">没有匹配的课程<br><span style="font-size:12px">试试课程名里的两个字，或课程号</span></div>`; return; }
+        box.innerHTML = list.map(c => {
+            const on = pickedCourse && String(pickedCourse.id) === String(c.id) ? 'on' : '';
+            const meta = [c.id ? ('课程号 ' + c.id) : '', c.teacher_name || c.teacher_id || ''].filter(Boolean).join(' · ');
+            return `<div class="picker-item ${on}" onclick="pickCourse('${String(c.id).replace(/[^0-9A-Za-z_-]/g, '')}')"><div class="c-name">${escapeHtml(c.name)}</div><div class="c-meta">${escapeHtml(meta)}</div></div>`;
+        }).join('');
+    }
+    function pickCourse(id) {
+        const c = courses.find(x => String(x.id) === String(id)); if (!c) return;
+        pickedCourse = c;
+        const box = document.getElementById('courseField'); if (box) box.innerHTML = courseTriggerHtml();
+        closeCoursePicker();
+    }
+    function closeCoursePicker() { const m = document.getElementById('coursePickerModal'); if (m) m.remove(); fitModalsToViewport(); }
+
+    // ---- 移动端键盘适配：让弹窗跟随可视区域，避免被键盘遮挡 ----
+    function fitModalsToViewport() {
+        const vv = window.visualViewport;
+        const h = vv ? vv.height : window.innerHeight;
+        const top = vv ? vv.offsetTop : 0;
+        document.querySelectorAll('.modal, .picker-modal').forEach(m => {
+            m.style.top = top + 'px';
+            m.style.height = h + 'px';
+        });
+    }
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', fitModalsToViewport);
+        window.visualViewport.addEventListener('scroll', fitModalsToViewport);
+    }
+    window.addEventListener('resize', fitModalsToViewport);
+    document.addEventListener('focusin', e => {
+        if (!e.target || !e.target.tagName) return;
+        if (!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+        setTimeout(() => { try { e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) { } }, 220);
+    });
+
+    function memberRowsHtml() {
+        return selectedMembers.map((m, idx) => `<div class="member-row ${m.self ? 'self' : ''}"><span class="name">${escapeHtml(m.name)}</span><span class="no">${m.studentNo}${m.self ? ' ' + T('selfTag') : ''}</span><input type="text" value="${escapeHtml(m.duty)}" placeholder="${T('dutyPlaceholder')}" onchange="updateDuty(${idx}, this.value)" oninput="updateDuty(${idx}, this.value)">${m.self ? '' : `<button onclick="removeMember(${idx})">${T('removeMember')}</button>`}</div>`).join('');
+    }
+    function renderMembers() { const box = document.getElementById('memberList'); if (box) box.innerHTML = memberRowsHtml(); }
+
+    function renderBookingModal(slot) {
+        const locHtml = slot.location ? `<div style="font-size:12px;line-height:1.4;color:#93c5fd;text-align:center;margin:-6px 0 12px;word-break:break-all;">📍 ${escapeHtml(slot.location)}</div>` : '';
+        const html = `<div class="modal" id="modal"><div class="box"><h3>${T('bookTitle')} ${slot.room} · ${slot.startTime}-${slot.endTime}</h3>${locHtml}<div class="field"><label>${T('courseLabel')} <span style="color:#dc2626">*</span></label><div id="courseField">${courseTriggerHtml()}</div></div><div class="field"><label>${T('membersLabel')} <span style="color:#dc2626">*</span></label><div id="memberList">${memberRowsHtml()}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><input id="addMemberNo" type="text" placeholder="${T('inputStudentNo')}" style="flex:1;min-width:100px" onkeydown="if(event.key==='Enter'){event.preventDefault();addSelectedMember();}"><button class="sm" onclick="addSelectedMember()" type="button">${T('addMember')}</button></div><div id="addMemberHint" style="display:none;color:#f87171;font-size:12px;margin-top:4px"></div></div><div class="modal-actions"><button class="sm gray" onclick="closeModal()">${T('cancel')}</button><button class="sm" onclick="submitBooking('${slot.room}','${slot.startTime}')">${T('submitBooking')}</button></div></div></div>`;
+        const old = document.getElementById('modal'); if (old) old.remove(); document.body.insertAdjacentHTML('beforeend', html); window._currentSlot = slot; fitModalsToViewport();
+    }
+
+    function updateDuty(idx, val) { selectedMembers[idx].duty = val; }
+    async function addSelectedMember() {
+        const noInput = document.getElementById('addMemberNo'); const hint = document.getElementById('addMemberHint'); if (!noInput) return; const no = noInput.value.trim();
+        function showHint(msg) { if (hint) { hint.innerText = msg; hint.style.display = 'block'; } showToast(msg, true); } function clearHint() { if (hint) { hint.innerText = ''; hint.style.display = 'none'; } } clearHint();
+        if (!no) { showHint(T('inputStudentNo')); return; } if (no === user.id) { showHint(T('memberSelf')); return; } if (selectedMembers.some(m => m.studentNo === no)) { showHint(T('memberDup')); return; }
+        try { const res = await fetch('/api/student-lookup?no=' + encodeURIComponent(no)); if (!res.ok) { const data = await res.json(); showHint(data.message || '未查到该学号'); return; } const data = await res.json(); const name = data.student.name; selectedMembers.push({ studentNo: no, name: name, className: data.student.class_name || '', duty: '', self: false }); renderMembers(); noInput.value = ''; setTimeout(() => { const newInp = document.getElementById('addMemberNo'); if (newInp) newInp.focus(); }, 50); } catch (e) { showHint('网络错误'); }
+    }
+
+    function removeMember(idx) { if (selectedMembers[idx].self) return; selectedMembers.splice(idx, 1); renderMembers(); }
+    function closeModal() { closeCoursePicker(); const m = document.getElementById('modal'); if (m) m.remove(); }
+
+    async function submitBooking(room, startTime) {
+        if (!pickedCourse) { showToast(T('pleaseSelectCourse'), true); return; }
+        const courseName = pickedCourse.name; if (selectedMembers.length < 1) { showToast(T('pleaseAddMember'), true); return; }
+        for (const m of selectedMembers) { if (!m.duty.trim()) { showToast(T('pleaseFillDuty') + '：' + m.name, true); return; } }
+        const res = await fetch('/api/booking/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, room, date: currentDate, startTime, course: courseName, members: selectedMembers.map(m => ({ studentNo: m.studentNo, name: m.name, duty: m.duty.trim() })), netdiskUrl: '' }) });
+        const data = await res.json();
+        if (!res.ok) {
+            if (data.code === 'SUBMIT_RESTRICTED') { closeModal(); await loadRestriction(); showRestrictModal(); return; }
+            showToast(data.message || data.code || '提交失败，请重试', true); return;
+        }
+        showToast(T('bookingSuccess'), false); closeModal(); loadBoard(); loadMyBookings();
+    }
+
+    async function loadMyBookings() {
+        const wrap = document.getElementById('myList');
+        if (!wrap) return;
+        let data = {};
+        try { const res = await fetch('/api/booking/my?userId=' + encodeURIComponent(user.id) + '&t=' + Date.now()); data = await res.json(); } catch (e) { wrap.innerHTML = '<div class="empty">' + (lang === 'zh' ? '加载失败，请检查网络后重试' : 'Load failed, please retry') + '</div>'; return; }
+        if (!data.bookings) { wrap.innerHTML = '<div class="empty">' + escapeHtml(data.message || (lang === 'zh' ? '加载失败，请稍后重试' : 'Load failed')) + '</div>'; return; }
+        let hasMemberInvites = false;
+        data.bookings.forEach(b => { if (b.student_no !== user.id && b.booking_status === 'booked') hasMemberInvites = true; });
+        if (hasMemberInvites) showToast('💡 您有加入他人的直播小组，请查看带有“组员邀请”的预约', false);
+
+        if (data.bookings.length === 0) { wrap.innerHTML = '<div class="empty">' + T('noBooking') + '</div>'; return; } wrap.innerHTML = '';
+        data.bookings.forEach(b => {
+            try {
+                const div = document.createElement('div'); div.className = 'booking-item'; let tag = '';
+                if (b.booking_status === 'cancelled') tag = '<span class="tag gray">' + T('stCancelled') + '</span>';
+                else if (b.review_status === 'completed') tag = '<span class="tag green">' + T('stScored') + '</span>';
+                else if (b.upload_status === 'overdue' && !b.netdisk_url) tag = '<span class="tag red">' + T('stLate') + '</span>';
+                else if (b.upload_status === 'submitted' && b.confirm_status === 'pending_confirm') tag = '<span class="tag orange">' + (b.late_flag ? T('stLatePending') : T('stPendingConfirm')) + '</span>';
+                else if (b.confirm_status === 'confirmed') tag = '<span class="tag blue">' + T('stPendingScore') + '</span>';
+                else if (b.confirm_status === 'rejected') tag = '<span class="tag red">' + T('stRejectedBlock') + '</span>';
+                else if (b.upload_status === 'pending_upload') tag = '<span class="tag orange">' + T('stPendingUpload') + '</span>';
+                else tag = '<span class="tag blue">' + T('stBooked') + '</span>';
+                if (b.is_score_timeout === true) tag = '<span class="tag red">' + T('scoreTimeoutTag') + '</span>';
+
+                const dateStr = String(b.date || '').slice(0, 10), stStr = String(b.st || '').slice(0, 5), etStr = String(b.et || '').slice(0, 5); let isLiveEnded = false, canCancel = false, remainText = '';
+                if (stStr.includes(':') && etStr.includes(':')) { try { const [sh, sm] = stStr.split(':').map(Number), [eh, em] = etStr.split(':').map(Number); const startT = new Date(dateStr + 'T00:00:00'); startT.setHours(sh, sm, 0, 0); const endT = new Date(dateStr + 'T00:00:00'); endT.setHours(eh, em, 0, 0); const now = new Date(); isLiveEnded = now >= endT; const remainMin = (startT - now) / 60000; canCancel = b.booking_status === 'booked' && remainMin > 120; if (b.booking_status === 'booked') { if (isLiveEnded) remainText = lang === 'zh' ? '直播已结束' : 'Live ended'; else if (remainMin <= 0) remainText = lang === 'zh' ? '直播进行中' : 'Live in progress'; else { const h = Math.floor(remainMin / 60), m = Math.round(remainMin % 60); if (h > 0) remainText = (lang === 'zh' ? `距开始 ${h} 小时 ${m} 分钟` : `${h}h ${m}m`) + (remainMin > 120 ? (lang === 'zh' ? ' · 可取消' : ' · Cancellable') : (lang === 'zh' ? ' · 不足 2 小时不可取消' : ' · <2h')); else remainText = (lang === 'zh' ? `距开始 ${m} 分钟` : `${m}m`) + (lang === 'zh' ? ' · 不足 2 小时不可取消' : ' · <2h'); } } } catch (e) {} }
+
+                const isLiveEndedUpload = isLiveEnded, needUpload = !b.netdisk_url || b.confirm_status === 'rejected', preApproved = b.pre_submit_status === 'approved', prePending = b.pre_submit_status === 'pending', preRejected = b.pre_submit_status === 'rejected', canUpload = b.booking_status === 'booked' && needUpload && ((isLiveEndedUpload) || preApproved), showNetdiskRow = isLiveEnded || b.netdisk_url || preApproved, canApplyPre = b.booking_status === 'booked' && !isLiveEnded && !b.netdisk_url && !preApproved && !prePending, isNoSubmitTimeout = (b.booking_status === 'booked' && b.upload_status === 'overdue' && !b.netdisk_url);
+
+                const memberLines = (b.members || []).map(m => { const isMe = m.studentNo === user.id; const scoreText = (m.score !== null && m.score !== undefined) ? `<span style="color:#34d399;font-weight:600">${m.score}</span>${m.comment ? ' · ' + escapeHtml(m.comment) : ''}` : '<span style="color:#64748b">-</span>'; return `<div style="font-size:13px;margin:4px 0; color:#cbd5e1;">${isMe ? '<b style="color:#fff">' : ''}${escapeHtml(m.name)}${isMe ? '</b>' : ''}（${m.studentNo}）· ${escapeHtml(m.duty || '')} · ${T('myScore')}：${scoreText}</div>`; }).join('');
+
+                const liveHint = (!isLiveEnded && b.booking_status === 'booked' && !b.netdisk_url && !preApproved) ? `<div class="desc" style="color:#94a3b8;font-size:12px;margin-top:8px;">${T('liveHintBefore')}</div>` : '', remainHtml = remainText ? `<div class="desc" style="color:#60a5fa;font-size:12px;margin-top:6px;">${remainText}</div>` : '';
+
+                let preStatusHtml = ''; if (prePending) preStatusHtml = `<div class="desc" style="color:#fcd34d;font-size:12px">⏳ ${T('prePending')}</div>`; else if (preApproved) preStatusHtml = `<div class="desc" style="color:#34d399;font-size:12px;font-weight:bold;">✅ ${T('preApproved')}</div>`; else if (preRejected) preStatusHtml = `<div class="desc" style="color:#f87171;font-size:12px">❌ ${T('preRejected')}${b.pre_submit_review_comment ? '：' + escapeHtml(b.pre_submit_review_comment) : ''}</div>`;
+                let rejectHint = ''; if (b.is_score_timeout) rejectHint = `<div class="desc" style="color:#f87171;font-size:12px;font-weight:600;margin-top:6px;">⚠️ ${T('scoreTimeoutHint')}</div>`; else if (b.confirm_status === 'rejected' && !b.netdisk_url) rejectHint = `<div class="desc" style="color:#f87171;font-size:12px;margin-top:6px;">⚠️ ${T('rejectedHint')}</div>`;
+                const noSubmitHint = isNoSubmitTimeout ? `<div class="desc" style="color:#f87171;font-size:12px;font-weight:600;margin-top:6px;">⚠️ ${T('noSubmitTimeoutHint')}</div>` : '';
+                const isLeader = b.student_no === user.id;
+
+                // 注意这里！我在标题里加上了数据库的真实 ID，方便你核对！
+                div.innerHTML = `
+                    <div class="title" style="color:#60a5fa;">【真实数据库 ID: ${b.id}】 ${T('room')} ${b.room || ''} · ${dateStr} ${stStr}-${etStr} ${tag} ${!isLeader ? '<span style="background:rgba(245,158,11,0.2); color:#fcd34d; border:1px solid rgba(245,158,11,0.4); padding:2px 8px; border-radius:10px; font-size:11px; margin-left:8px;">👥 组员邀请</span>' : ''}</div>
+                    <div class="desc"><b>${T('course')}：</b>${escapeHtml(b.course || '')} (组长: ${escapeHtml(b.student_name)})</div>
+                    <div class="desc"><b>${T('members')}：</b></div>${memberLines}${remainHtml}${preStatusHtml}${rejectHint}${noSubmitHint}
+                    ${showNetdiskRow ? `<div class="desc" style="word-break:break-all; margin-top:10px; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px;"><b>${T('netdisk')}：</b>${b.netdisk_url ? '<a href="' + escapeHtml(b.netdisk_url) + '" target="_blank" style="color:#60a5fa; text-decoration:none;">' + escapeHtml(b.netdisk_url) + '</a>' : '<span style="color:#64748b">' + T('notSubmitted') + '</span>'}</div>` : ''}${liveHint}
+                    <div class="actions">
+                        ${isLeader ? `${canCancel ? `<button class="sm gray" onclick="cancelBooking(${b.id})">${T('cancelBooking')}</button>` : ''}${canUpload ? `<button class="sm" onclick="openUploadModal(${b.id})">${T('submitNetdisk')}</button>` : ''}${canApplyPre ? `<button class="sm orange" onclick="openPreApplyModal(${b.id})">${preRejected ? T('preReApply') : T('preApplyBtn')}</button>` : ''}` : `<div style="font-size:13px;color:#94a3b8;padding:4px 0;">您是小组成员，由组长 <b>${escapeHtml(b.student_name)}</b> 负责管理此预约和提交网盘。</div>`}
+                    </div>`;
+                wrap.appendChild(div);
+            } catch (err) {}
+        });
+    }
+
+    async function cancelBooking(bookingId) { if (!confirm(T('confirmCancel'))) return; const res = await fetch('/api/booking/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, userId: user.id }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '取消失败', true); return; } showToast(T('cancelled'), false); loadMyBookings(); loadBoard(); }
+    function openUploadModal(bookingId) { const html = `<div class="modal" id="uploadModal"><div class="box"><h3>${T('submitNetdisk')}</h3><div class="field"><label>${T('netdisk')}</label><input id="uploadUrl" placeholder="https://pan.baidu.com/s/xxxx"></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('uploadModal').remove()">${T('cancel')}</button><button class="sm" onclick="doUpload(${bookingId})">${T('submit')}</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function doUpload(bookingId) { const url = document.getElementById('uploadUrl').value.trim(); if (!url) { showToast(T('pleaseInputLink'), true); return; } const res = await fetch('/api/booking/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, userId: user.id, netdiskUrl: url }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '提交失败', true); return; } showToast(data.message || T('uploadSuccess'), false); document.getElementById('uploadModal').remove(); await loadRestriction(); loadMyBookings(); }
+    function openPreApplyModal(bookingId) { const html = `<div class="modal" id="preApplyModal"><div class="box"><h3>${T('preApplyTitle')}</h3><div class="field"><label>${T('preApplyReason')} <span style="color:#dc2626">*</span></label><textarea id="preReason" placeholder="${T('preApplyPlaceholder')}"></textarea></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('preApplyModal').remove()">${T('cancel')}</button><button class="sm" onclick="submitPreApply(${bookingId})">${T('preApplySubmit')}</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function submitPreApply(bookingId) { const reason = document.getElementById('preReason').value.trim(); if (!reason) { showToast(T('preApplyReason') + '不能为空', true); return; } const res = await fetch('/api/booking/pre-submit-apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, userId: user.id, reason }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '提交失败', true); return; } showToast(T('preApplySuccess'), false); document.getElementById('preApplyModal').remove(); loadMyBookings(); }
+
+    function checkMustChangePassword() { if (user && user.mustChangePassword) showChangePasswordModal(); }
+    function showChangePasswordModal() { const html = `<div class="modal" id="cpModal"><div class="box"><h3>${T('cpTitle')}</h3><p style="font-size:13px;color:#94a3b8;margin-bottom:14px">${T('cpHint')}</p><div class="field"><label>${T('cpOld')}</label><input id="cpOld" type="password"></div><div class="field"><label>${T('cpNew')}</label><input id="cpNew" type="password"></div><div class="field"><label>${T('cpConfirm')}</label><input id="cpConfirm" type="password"></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('cpModal').remove()">${T('cancel')}</button><button class="sm" onclick="submitChangePassword()">${T('cpSubmit')}</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function submitChangePassword() { const oldPwd = document.getElementById('cpOld').value; const newPwd = document.getElementById('cpNew').value; const cfmPwd = document.getElementById('cpConfirm').value; if (!oldPwd || !newPwd || !cfmPwd) { showToast(T('cpFillAll'), true); return; } if (newPwd !== cfmPwd) { showToast(T('cpMismatch'), true); return; } if (newPwd.length < 6) { showToast(T('cpTooShort'), true); return; } const res = await fetch('/api/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '修改失败', true); return; } showToast(T('cpSuccess'), false); document.getElementById('cpModal').remove(); user.mustChangePassword = false; }
+
+    function checkImpersonating(imp) { if (!imp || !imp.byAdmin) return; const old = document.getElementById('impersonateBar'); if (old) old.remove(); const div = document.createElement('div'); div.id = 'impersonateBar'; div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#78350f;padding:10px;z-index:99999;display:flex;justify-content:space-between;align-items:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);gap:10px;flex-wrap:wrap'; div.innerHTML = `<span>⚠️ 测试模式：<b>${user.name}</b></span><div style="display:flex;gap:8px"><button onclick="openImpersonatePicker()" style="padding:4px 10px;background:#1e3a8a;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">切换</button><button onclick="restoreAdmin()" style="padding:4px 10px;background:#78350f;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">返回</button></div>`; document.body.appendChild(div); }
+    async function restoreAdmin() { const res = await fetch('/api/admin/restore', { method: 'POST' }); const data = await res.json(); if (!res.ok) { alert(data.message); return; } location.href = data.redirect + '?t=' + Date.now(); }
+    async function openImpersonatePicker() { const old = document.getElementById('impersonatePickerModal'); if (old) old.remove(); const res = await fetch('/api/admin/test-accounts'); if (!res.ok) { alert('无法加载'); return; } const data = await res.json(); const a = data.accounts; function makeOptions(list, role, roleLabel) { if (!list || list.length === 0) return ''; return `<optgroup label="${roleLabel}">` + list.map(u => `<option value="${role}|${u.id}">${u.name || ''}（${u.id}）</option>`).join('') + `</optgroup>`; } const html = `<div class="modal" id="impersonatePickerModal" style="z-index:100000"><div class="box"><h3>切换测试身份</h3><div class="field"><label>选择账户</label><select id="impersonateSelect" style="width:100%;padding:10px;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:16px;background:rgba(0,0,0,0.4);color:#fff;">${makeOptions(a.students, 'student', '👨‍🎓 学生')}${makeOptions(a.teachers, 'teacher', '👨‍🏫 教师')}${makeOptions(a.directors, 'director', '📋 主任')}${makeOptions(a.deans, 'dean', '🏛️ 三级院长')}</select></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('impersonatePickerModal').remove()">取消</button><button class="sm" onclick="doImpersonateSwitch()">切换</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function doImpersonateSwitch() { const val = document.getElementById('impersonateSelect').value; if (!val) return; const [targetRole, targetId] = val.split('|'); const res = await fetch('/api/admin/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetRole, targetId }) }); const data = await res.json(); if (!res.ok) { alert(data.message); return; } setTimeout(() => { location.href = data.redirect + '?t=' + Date.now(); }, 800); }
+    async function loadRandomQuote() { try { const res = await fetch('/api/quotes/random?t=' + Date.now()); const data = await res.json(); if (data.code === 'OK' && data.quote) { const box = document.getElementById('quoteBanner'); box.style.display = 'block'; document.getElementById('quoteContentInner').innerText = data.quote.content; document.getElementById('quoteAuthorInner').innerText = data.quote.author; } } catch (e) {} } loadRandomQuote();
+    const innerEventSource = new EventSource('/api/quotes/stream'); innerEventSource.onmessage = (event) => { if (event.data === 'refresh') loadRandomQuote(); }; window.addEventListener('beforeunload', () => { innerEventSource.close(); });
+
+    (async () => {
+        const meRes = await fetch('/api/me?t=' + Date.now());
+        if (!meRes.ok) { location.replace('/?timeout=1'); return; }
+        const meData = await meRes.json();
+        user = meData.user;
+        checkImpersonating(meData.impersonating);
+        if (user.role !== 'student') {
+            if (!sessionStorage.getItem('retry_redirect_student')) {
+                sessionStorage.setItem('retry_redirect_student', '1');
+                setTimeout(() => { location.reload(); }, 600);
+            } else {
+                sessionStorage.removeItem('retry_redirect_student');
+                location.replace('/?timeout=1');
+            }
+            return;
+        }
+        sessionStorage.removeItem('retry_redirect_student');
+        document.getElementById('userInfo').innerText = user.name + ' · ' + user.college + ' · ' + user.id;
+        applyI18N();
+        await loadCourses();
+        await loadBoard();
+        checkMustChangePassword();
+        await loadRestriction();
+        // 进入页面时若存在逾期未提交或教师催交，自动弹窗提示（首次改密弹窗优先，避免叠加）
+        if ((restriction.restricted || restriction.reminders.length) && !(user && user.mustChangePassword)) showRestrictModal();
+
+        try {
+            const checkRes = await fetch('/api/booking/my?userId=' + encodeURIComponent(user.id));
+            const checkData = await checkRes.json();
+            const hasInvites = checkData.bookings?.some(b => b.student_no !== user.id && b.booking_status === 'booked');
+            if (hasInvites) {
+                const myTab = document.getElementById('t-tabMy');
+                if (myTab && !myTab.innerHTML.includes('🔴')) {
+                    myTab.innerHTML += ' 🔴';
+                }
+            }
+        } catch (e) {}
+
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.remove();
+    })();
+    setInterval(() => { if (!user || document.hidden) return; const activeTab = document.querySelector('.tabs button.on'); if (activeTab && activeTab.dataset.tab === 'board') { loadBoard(); loadRestriction(); } }, 60000);
+</script>
+
+<!-- ===== 联系管理员（点击复制邮箱） ===== -->
+<style>
+  #caFab { position: fixed; right: 12px; bottom: 12px; z-index: 9000; background: rgba(30,41,59,.94); color: #e2e8f0;
+           border: 1px solid rgba(148,163,184,.45); border-radius: 999px; padding: 8px 13px; font-size: 12px; line-height: 1;
+           cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); font-family: inherit; }
+  #caFab:active { transform: scale(.97); }
+  #caMask { position: fixed; inset: 0; background: rgba(0,0,0,.65); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            z-index: 99998; display: none; align-items: center; justify-content: center; padding: 16px; }
+  #caBox { width: 100%; max-width: 380px; background: #1b1130; border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+           padding: 20px; color: #e2e8f0; box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+  #caBox h3 { font-size: 16px; margin: 0 0 12px; color: #f8fafc; }
+  #caMailBtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px;
+               background: rgba(59,130,246,.14); border: 1px solid rgba(59,130,246,.5); border-radius: 10px; color: #93c5fd;
+               font-size: 14px; cursor: pointer; font-family: inherit; }
+  #caMailBtn.copied { border-color: #34d399; background: rgba(52,211,153,.14); }
+  #caCopyTip { font-size: 11px; color: #cbd5e1; background: rgba(255,255,255,.12); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  #caBox .ca-note { font-size: 12px; line-height: 1.7; color: #94a3b8; margin-top: 10px; }
+  #caBox .ca-note b { color: #e2e8f0; }
+  #caBox .ca-close { width: 100%; margin-top: 14px; padding: 9px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+                     border-radius: 8px; color: #cbd5e1; font-size: 13px; cursor: pointer; font-family: inherit; }
+  #caToast { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: rgba(5,150,105,.96); color: #fff;
+             padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 100001; display: none; max-width: 80vw; text-align: center; }
+</style>
+<div id="caFab" onclick="caOpen()">✉️ 联系管理员</div>
+<div id="caMask" onclick="if(event.target===this)caClose()">
+  <div id="caBox">
+    <h3>✉️ 联系管理员</h3>
+    <button type="button" id="caMailBtn" onclick="caCopy()">
+      <span id="caMailText">ranliu6953@163.com</span>
+      <span id="caCopyTip">点击复制</span>
+    </button>
+    <div class="ca-note">
+      邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：
+      出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。
+    </div>
+    <button type="button" class="ca-close" onclick="caClose()">关闭</button>
+  </div>
+</div>
+<div id="caToast"></div>
+<script>
+(function () {
+  var EMAIL = 'ranliu6953@163.com';
+  function toast(msg) {
+    var t = document.getElementById('caToast'); if (!t) return;
+    t.innerText = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2000);
+  }
+  function markCopied() {
+    var b = document.getElementById('caMailBtn'), tip = document.getElementById('caCopyTip');
+    if (b) { b.classList.add('copied'); setTimeout(function () { b.classList.remove('copied'); }, 2200); }
+    if (tip) { tip.innerText = '已复制'; setTimeout(function () { tip.innerText = '点击复制'; }, 2200); }
+    toast('邮箱已复制：' + EMAIL);
+  }
+  window.caOpen = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'flex'; };
+  window.caClose = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'none'; };
+  window.caCopy = function () {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = EMAIL; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, EMAIL.length);
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { markCopied(); return; }
+      var el = document.getElementById('caMailText');
+      if (el) { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('复制失败，请长按选中的邮箱手动复制');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(EMAIL).then(markCopied).catch(fallback);
+    } else { fallback(); }
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') caClose(); });
+})();
+</script>
+</body>
+</html>

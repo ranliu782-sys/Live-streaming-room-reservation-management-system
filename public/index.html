@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直播间预约系统 - 登录</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; }
+        body {
+            font-family: -apple-system, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #120822 0%, #1e1038 50%, #0f071f 100%);
+            color: #ffffff; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden;
+        }
+        .watermark-logo {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px;
+            mix-blend-mode: screen; opacity: 0.8; z-index: 0; pointer-events: none; object-fit: contain;
+            -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 65%);
+            mask-image: radial-gradient(circle, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 65%);
+            filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)) brightness(1.2);
+        }
+        .glass-card {
+            position: relative; z-index: 10; background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 16px;
+            padding: 40px 35px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+        h1 { font-size: 24px; margin-bottom: 30px; text-align: center; font-weight: 600; letter-spacing: 1px; line-height: 1.35; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-size: 13px; color: #cbd5e1; display: block; margin-bottom: 8px; }
+        .form-group input {
+            padding: 12px 16px; border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4); border-radius: 10px; font-size: 15px; width: 100%; color: #ffffff; outline: none; transition: all 0.3s;
+        }
+        .form-group input:focus { border-color: #3b82f6; background: rgba(0, 0, 0, 0.6); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .login-btn {
+            width: 100%; padding: 14px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff; cursor: pointer; margin-top: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+        .login-btn:hover { background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); }
+        .login-btn:disabled { background: #334155; cursor: not-allowed; }
+        .muted { color: #f87171; font-size: 13px; margin-top: 15px; text-align: center; min-height: 18px; }
+        .lang-switch { position: absolute; top: 20px; right: 20px; display: flex; gap: 6px; z-index: 20; }
+        .lang-switch button { padding: 4px 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; -webkit-tap-highlight-color: transparent; transition: background 0.2s, color 0.2s, border-color 0.2s; }
+        .lang-switch button:hover { border-color: #60a5fa; color: #fff; }
+        .lang-switch button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .bottom-text { position: absolute; bottom: 40px; left: 0; width: 100%; text-align: center; z-index: 10; }
+        .bottom-text .en { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        .bottom-text .zh { font-size: 14px; color: #e2e8f0; font-weight: bold; }
+        .toast {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            background: #dc2626; color: #fff; padding: 12px 24px; border-radius: 8px;
+            z-index: 200; font-size: 14px; display: none;
+        }
+        /* 联系管理员 */
+        .contact-admin { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.12); text-align: left; }
+        .ca-head { font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
+        .ca-mail {
+            width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 10px 12px; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.45);
+            border-radius: 10px; color: #93c5fd; font-size: 14px; cursor: pointer; font-family: inherit;
+            transition: all 0.2s; text-align: left;
+        }
+        .ca-mail:hover { background: rgba(59, 130, 246, 0.22); border-color: #60a5fa; }
+        .ca-mail:active { transform: scale(0.99); }
+        .ca-mail.copied { border-color: #34d399; background: rgba(52, 211, 153, 0.12); }
+        .ca-copy { font-size: 11px; color: #cbd5e1; background: rgba(255, 255, 255, 0.12); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+        .ca-mail.copied .ca-copy { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+        .ca-note { margin-top: 8px; font-size: 12px; line-height: 1.7; color: #94a3b8; }
+        .ca-note b { color: #e2e8f0; }
+        @media (max-width: 768px) {
+            /* 顶部留出语言按钮的空间，避免窄屏下按钮压住标题 */
+            .glass-card { margin: 56px 20px 20px; padding: 30px 20px; }
+            .watermark-logo { width: 400px; height: 400px; }
+            .bottom-text { bottom: 20px; }
+            .lang-switch { top: 14px; right: 14px; }
+            .lang-switch button { padding: 8px 14px; font-size: 13px; }
+        }
+        @media (max-height: 760px) {
+            body { flex-direction: column; overflow-y: auto; justify-content: flex-start; align-items: center; padding: 16px 0; }
+            .glass-card { margin: 52px 20px 8px; }
+            .bottom-text { position: static; margin: 14px 0 6px; width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="lang-switch">
+    <button type="button" id="btn-zh" class="on">中文</button>
+    <button type="button" id="btn-en">EN</button>
+</div>
+
+<img class="watermark-logo" src="/logo.png" alt="" onerror="this.style.display='none'">
+
+<div class="glass-card">
+    <h1 data-i18n="title">直播间预约系统</h1>
+    <div class="form-group">
+        <label data-i18n="account">账号</label>
+        <input id="loginId" data-i18n-ph="accountPh" placeholder="学号 / 工号" autocomplete="off">
+    </div>
+    <div class="form-group">
+        <label data-i18n="password">密码</label>
+        <!-- 加了 autocomplete="new-password" 防止浏览器自动填充幽灵密码 -->
+        <input id="loginPwd" type="password" data-i18n-ph="passwordPh" placeholder="请输入密码" autocomplete="new-password">
+    </div>
+    <button id="loginBtn" class="login-btn" data-i18n="loginBtn">登 录</button>
+    <p class="muted" id="loginTip"></p>
+
+    <div class="contact-admin">
+        <div class="ca-head" data-i18n="contactHead">✉️ 有需要可联系管理员</div>
+        <button type="button" class="ca-mail" id="adminMailBtn" onclick="copyAdminEmail()">
+            <span id="adminMailText">ranliu6953@163.com</span>
+            <span class="ca-copy" id="caCopyTip" data-i18n="copyTip">点击复制</span>
+        </button>
+        <div class="ca-note" data-i18n-html="contactNote">
+            邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：
+            出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。
+        </div>
+    </div>
+</div>
+
+<div class="bottom-text">
+    <div class="en" data-i18n="schoolSub">School of Cyberspace Security</div>
+    <div class="zh" data-i18n="schoolMain">河北外国语学院 | 网络空间安全学院</div>
+</div>
+
+<script>
+    let isLoggingIn = false;
+
+    // ================= 中英切换 =================
+    const I18N = {
+        zh: {
+            docTitle: '直播间预约系统 - 登录',
+            title: '直播间预约系统',
+            account: '账号',
+            accountPh: '学号 / 工号',
+            password: '密码',
+            passwordPh: '请输入密码',
+            loginBtn: '登 录',
+            loggingIn: '登录中...',
+            contactHead: '✉️ 有需要可联系管理员',
+            copyTip: '点击复制',
+            copied: '已复制',
+            contactNote: '邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。',
+            schoolMain: '河北外国语学院 | 网络空间安全学院',
+            schoolSub: 'School of Cyberspace Security',
+            emptyInput: '请输入账号和密码',
+            loginFailed: '登录失败',
+            loginOk: '登录成功，跳转中...',
+            netError: '网络错误',
+            copyFail: '复制失败，请长按选中的邮箱手动复制',
+            copyOk: '邮箱已复制：',
+            multiTitle: '检测到多重身份',
+            multiTip: '请选择您要进入的系统：',
+            cancel: '取消',
+            roles: { teacher: '👨‍🏫 教师', director: '📋 主任', dean: '🏛️ 三级院长', admin: '⚙️ 管理员', student: '🎓 学生' }
+        },
+        en: {
+            docTitle: 'Live Room Booking System - Sign in',
+            title: 'Live Room Booking System',
+            account: 'Account',
+            accountPh: 'Student / Staff ID',
+            password: 'Password',
+            passwordPh: 'Enter your password',
+            loginBtn: 'Sign In',
+            loggingIn: 'Signing in...',
+            contactHead: '✉️ Need help? Contact the administrator',
+            copyTip: 'Click to copy',
+            copied: 'Copied',
+            contactNote: 'Your email will be handled within <b>48 hours</b>. To help us locate the issue, please <b>describe the problem and how it happened in detail</b>: which page you were on, what you clicked, what message appeared, and a screenshot if you have one.',
+            schoolMain: 'School of Cyberspace Security',
+            schoolSub: 'Hebei Foreign Studies University',
+            emptyInput: 'Please enter your account and password',
+            loginFailed: 'Sign-in failed',
+            loginOk: 'Signed in, redirecting...',
+            netError: 'Network error',
+            copyFail: 'Copy failed, please long-press the selected email to copy manually',
+            copyOk: 'Email copied: ',
+            multiTitle: 'Multiple roles detected',
+            multiTip: 'Choose the portal you want to enter:',
+            cancel: 'Cancel',
+            roles: { teacher: '👨‍🏫 Teacher', director: '📋 Director', dean: '🏛️ Dean', admin: '⚙️ Admin', student: '🎓 Student' }
+        }
+    };
+
+    let curLang = 'zh';
+
+    function t(key) {
+        const pack = I18N[curLang] || I18N.zh;
+        const v = pack[key] !== undefined ? pack[key] : I18N.zh[key];
+        return v !== undefined ? v : key;
+    }
+
+    function applyLang(lang) {
+        curLang = (lang === 'en') ? 'en' : 'zh';
+        // 与内页（student/teacher/admin）共用同一个键，登录后语言保持一致
+        try { localStorage.setItem('lang', curLang); } catch (e) {}
+        document.documentElement.lang = curLang === 'en' ? 'en' : 'zh-CN';
+        document.title = t('docTitle');
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.getAttribute('data-i18n'));
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(el => {
+            el.innerHTML = t(el.getAttribute('data-i18n-html'));
+        });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+            el.placeholder = t(el.getAttribute('data-i18n-ph'));
+        });
+
+        // 正在提交登录时保留「登录中」文案
+        const btn = document.getElementById('loginBtn');
+        if (btn) btn.innerText = isLoggingIn ? t('loggingIn') : t('loginBtn');
+
+        const zhBtn = document.getElementById('btn-zh'), enBtn = document.getElementById('btn-en');
+        if (zhBtn) zhBtn.classList.toggle('on', curLang === 'zh');
+        if (enBtn) enBtn.classList.toggle('on', curLang === 'en');
+    }
+
+    // 自动检测已登录
+    (async () => {
+        if (window.location.search.includes('timeout=1')) return;
+        try {
+            const res = await fetch('/api/me?t=' + Date.now());
+            if (res.ok && !isLoggingIn) {
+                const data = await res.json();
+                const r = data.user.role;
+                if (r === 'student') window.location.replace('/student.html');
+                else if (r === 'teacher') window.location.replace('/teacher.html');
+                else if (r === 'director') window.location.replace('/director.html');
+                else if (r === 'dean') window.location.replace('/dean.html');
+                else if (r === 'admin') window.location.replace('/admin.html');
+            }
+        } catch (e) {}
+    })();
+
+    // 核心登录逻辑，剥离出来，用闭包传参，防止浏览器填错
+    async function doLogin(userId, password, forceRole = null) {
+        const tip = document.getElementById('loginTip');
+        const btn = document.getElementById('loginBtn');
+
+        if (!userId || !password) { showToast(t('emptyInput')); return; }
+
+        isLoggingIn = true; 
+        btn.disabled = true;
+        btn.innerText = t('loggingIn');
+
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, password, forceRole })
+            });
+            const data = await res.json();
+
+            // 处理多角色选择
+            if (data.code === 'MULTI_ROLE') {
+                btn.disabled = false; 
+                btn.innerText = t('loginBtn'); 
+                isLoggingIn = false;
+                showRolePicker(data.roles, userId, password);
+                return;
+            }
+
+            // 处理错误
+            if (!res.ok) {
+                tip.innerText = '[' + data.code + '] ' + (data.message || t('loginFailed'));
+                showToast(data.message || t('loginFailed'));
+                isLoggingIn = false; 
+                btn.disabled = false; 
+                btn.innerText = t('loginBtn');
+                return;
+            }
+
+            // 登录成功
+            tip.innerText = '';
+            showToast(t('loginOk'), true);
+            const r = data.user.role;
+
+            setTimeout(() => {
+                if (r === 'student') window.location.replace('/student.html');
+                else if (r === 'teacher') window.location.replace('/teacher.html');
+                else if (r === 'director') window.location.replace('/director.html');
+                else if (r === 'dean') window.location.replace('/dean.html');
+                else window.location.replace('/admin.html');
+            }, 300);
+
+        } catch (e) {
+            tip.innerText = t('netError') + (curLang === 'en' ? ': ' : '：') + e.message;
+            showToast(t('netError'));
+            isLoggingIn = false; 
+            btn.disabled = false; 
+            btn.innerText = t('loginBtn');
+        }
+    }
+
+    // 首次点击按钮
+    document.getElementById('loginBtn').onclick = () => {
+        const userId = document.getElementById('loginId').value.trim();
+        const password = document.getElementById('loginPwd').value.trim(); 
+        doLogin(userId, password, null);
+    };
+
+    // 弹出身份选择框
+    function showRolePicker(roles, userId, password) {
+        const old = document.getElementById('rolePickerModal'); 
+        if (old) old.remove();
+        
+        const roleMap = t('roles') || {};
+        
+        // 🌟 核心修复：把 userId 和 password 作为参数直接传递给 doLogin，不再去输入框读！
+        let btnsHtml = roles.map(r => {
+            return `<button class="role-btn" onclick="document.getElementById('rolePickerModal').remove(); doLogin('${userId}', '${password}', '${r.role}')">
+                        ${roleMap[r.role] || r.role} <br><span style="font-size:12px;opacity:0.7;">${r.name}</span>
+                    </button>`;
+        }).join('');
+        
+        const html = `
+        <div id="rolePickerModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:10000;">
+            <div style="background:rgba(30,16,56,0.95); border:1px solid rgba(255,255,255,0.2); border-radius:16px; padding:30px; width:100%; max-width:380px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+                <h3 style="margin-bottom:15px; color:#fff; font-size:18px;">${t('multiTitle')}</h3>
+                <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">${t('multiTip')}</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">${btnsHtml}</div>
+                <button onclick="document.getElementById('rolePickerModal').remove()" style="margin-top:20px; background:transparent; border:none; color:#64748b; cursor:pointer; font-size:13px;">${t('cancel')}</button>
+            </div>
+        </div>
+        <style>
+            .role-btn { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:15px 10px; color:#fff; cursor:pointer; font-size:14px; transition:all 0.2s; }
+            .role-btn:hover { background:rgba(59,130,246,0.2); border-color:#3b82f6; transform:translateY(-2px); }
+        </style>`;
+        
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    document.getElementById('loginPwd').addEventListener('keydown', e => { 
+        if (e.key === 'Enter') document.getElementById('loginBtn').click(); 
+    });
+
+    // 联系管理员：点击复制邮箱（http 环境下 clipboard API 不可用，走 execCommand 兜底）
+    const ADMIN_EMAIL = 'ranliu6953@163.com';
+    function markCopied() {
+        const btn = document.getElementById('adminMailBtn'), tip = document.getElementById('caCopyTip');
+        if (btn) { btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 2200); }
+        if (tip) { tip.innerText = t('copied'); setTimeout(() => { tip.innerText = t('copyTip'); }, 2200); }
+        showToast(t('copyOk') + ADMIN_EMAIL, true);
+    }
+    function copyAdminEmail() {
+        const fallback = () => {
+            const ta = document.createElement('textarea');
+            ta.value = ADMIN_EMAIL;
+            ta.setAttribute('readonly', '');
+            ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+            document.body.appendChild(ta);
+            ta.select(); ta.setSelectionRange(0, ADMIN_EMAIL.length);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            if (ok) { markCopied(); return; }
+            // 仍然失败：把邮箱选中，提示手动复制
+            const el = document.getElementById('adminMailText');
+            if (el) { const range = document.createRange(); range.selectNodeContents(el); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+            showToast(t('copyFail'), true);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(ADMIN_EMAIL).then(markCopied).catch(fallback);
+        } else { fallback(); }
+    }
+
+    function showToast(msg, isOk) { 
+        document.querySelectorAll('.toast').forEach(x => x.remove()); 
+        const t2 = document.createElement('div'); 
+        t2.className = 'toast'; 
+        if(isOk) t2.style.background = '#059669'; 
+        t2.innerText = msg; 
+        t2.style.display = 'block';
+        document.body.appendChild(t2); 
+        setTimeout(() => t2.remove(), 2500); 
+    }
+
+    // ================= 语言切换：按钮绑定与初始化 =================
+    document.getElementById('btn-zh').addEventListener('click', () => applyLang('zh'));
+    document.getElementById('btn-en').addEventListener('click', () => applyLang('en'));
+
+    (function initLang() {
+        let saved = 'zh';
+        try { saved = localStorage.getItem('lang') || 'zh'; } catch (e) {}
+        applyLang(saved);
+    })();
+</script>
+</body>
+</html>

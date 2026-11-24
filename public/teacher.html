@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Teacher - Live Practice</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #120822 0%, #1e1038 50%, #0f071f 100%); color: #cbd5e1; padding: 20px; min-height: 100vh; position: relative; }
+
+        /* 水印 */
+        .watermark-logo { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 820px; height: 820px; mix-blend-mode: screen; opacity: 0.1; z-index: -1; pointer-events: none; object-fit: contain; filter: drop-shadow(0 0 24px rgba(96, 165, 250, 0.4)) brightness(1.1) blur(2px); }
+
+        .wrap { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+        .card { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+
+        h1 { font-size: 22px; margin-bottom: 6px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        h2 { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center; }
+        .info { font-size: 13px; color: #94a3b8; }
+        .right-bar { display: flex; gap: 10px; align-items: center; }
+
+        .lang-switch { display: flex; gap: 4px; }
+        .lang-switch button { padding: 4px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; transition: all 0.3s; }
+        .lang-switch button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .btn-change-pwd { padding: 4px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tabs button { padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 8px; cursor: pointer; font-size: 14px; flex-shrink: 0; color: #cbd5e1; transition: all 0.3s; }
+        .tabs button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        .date-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+        .date-bar button { flex: 1; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 13px; color: #cbd5e1; transition: all 0.3s; }
+        .date-bar button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        /* 看板 */
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .room-col { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); }
+        .room-col h3 { font-size: 15px; text-align: center; margin-bottom: 4px; color: #fff; }
+        .room-col .room-loc { font-size: 11px; line-height: 1.4; text-align: center; color: #93c5fd; margin-bottom: 10px; padding: 0 2px; word-break: break-all; }
+        .slot { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 13px; text-align: center; }
+        .slot.available { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); }
+        .slot.booked { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); }
+        .slot.unavailable { border-color: rgba(100,116,139,0.3); background: rgba(100,116,139,0.1); color: #64748b; }
+        .slot .time { font-weight: 600; color: #fff; }
+        .slot .status { margin-top: 4px; color: #94a3b8; font-size: 12px; }
+        .slot.booked .status { color: #fca5a5; }
+
+        /* 列表项 */
+        .item { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.2); }
+        .item .title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #fff; }
+        .desc { font-size: 13px; color: #cbd5e1; margin: 4px 0; line-height: 1.7; word-break: break-all; }
+
+        /* 打分输入框 */
+        .member-score { border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; margin-top: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: rgba(255,255,255,0.03); }
+        .member-score .name { font-weight: 600; min-width: 80px; color: #fff; }
+        .member-score .duty { color: #94a3b8; font-size: 12px; min-width: 100px; }
+        .member-score input.score-input { width: 70px; padding: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); border-radius: 5px; font-size: 14px; color: #fff; }
+        .member-score input.comment-input { flex: 1; min-width: 150px; padding: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); border-radius: 5px; font-size: 14px; color: #fff; }
+
+        button.sm { padding: 6px 12px; font-size: 13px; border-radius: 5px; border: none; cursor: pointer; background: #3b82f6; color: #fff; transition: all 0.3s; }
+        button.sm:hover { background: #2563eb; }
+        button.sm.gray { background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
+        button.sm.red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+        button.sm.green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+        button.sm.orange { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+
+        .actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; font-weight: normal; }
+        .tag.green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+        .tag.red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .tag.orange { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+        .tag.blue { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+
+        .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 20px; border-radius: 8px; z-index: 100005; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.2); white-space: nowrap; }
+        .toast.err { background: rgba(220,38,38,0.9); }
+        .toast.ok { background: rgba(5,150,105,0.9); }
+        .empty { text-align: center; color: #64748b; padding: 20px; font-size: 13px; }
+
+        /* 弹窗 */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 10px; }
+        .modal .box { background: rgba(30, 16, 56, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 40px rgba(0,0,0,.5); border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; max-height: 90vh; overflow: auto; }
+        .modal h3 { font-size: 18px; margin-bottom: 14px; color: #fff; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 6px; }
+        .field input, .field textarea { width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 15px; font-family: inherit; color: #fff; }
+        .field textarea { min-height: 80px; resize: vertical; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+        a { color: #60a5fa; text-decoration: none; }
+        #loadingOverlay { position: fixed; inset: 0; background: #0f071f; z-index: 999999; display: flex; justify-content: center; align-items: center; font-size: 16px; color: #94a3b8; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .right-bar { width: 100%; justify-content: space-between; }
+            .board { grid-template-columns: 1fr; }
+            .modal .box { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div id="loadingOverlay">正在加载数据，请稍候...</div>
+<img class="watermark-logo" src="/logo.png" alt="院徽水印">
+
+<div class="wrap">
+    <div id="quoteBanner" style="display:none; margin-bottom:16px; padding:14px 18px; background:rgba(255,255,255,0.06); border-left:4px solid #3b82f6; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,.2); backdrop-filter:blur(10px); border-top:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1); border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:13px; color:#cbd5e1; font-style:italic;">💡 <span id="quoteContentInner"></span></div>
+            <div style="font-size:12px; color:#94a3b8;">—— <span id="quoteAuthorInner"></span> <span style="color:#60a5fa; margin-left:8px; cursor:pointer; user-select:none;" onclick="loadRandomQuote()">🔄 点击换一条</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="topbar">
+            <div><h1 id="t-pageTitle">👨‍🏫 教师端 · 直播实践管理</h1><div class="info" id="userInfo"></div></div>
+            <div class="right-bar">
+                <div class="lang-switch"><button id="btn-zh" class="on" onclick="setLang('zh')">中文</button><button id="btn-en" onclick="setLang('en')">EN</button></div>
+                <button class="btn-change-pwd" id="t-btnChangePwd" onclick="showChangePasswordModal()">修改密码</button>
+                <a href="javascript:void(0)" onclick="doLogout()" id="t-logout" style="font-size:14px;">← 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="on" data-tab="board" id="t-tabBoard">看板</button>
+        <button data-tab="confirm" id="t-tabConfirm">待确认网盘链接</button>
+        <button data-tab="remind" id="t-tabRemind">催交提醒</button>
+        <button data-tab="presubmit" id="t-tabPreSubmit">提前提交申请</button>
+        <button data-tab="score" id="t-tabScore">待打分</button>
+        <button data-tab="scored" id="t-tabScored">已打分</button>
+    </div>
+
+    <div class="card" id="panel-board">
+        <h2 id="t-boardTitle">我的课程直播间看板</h2>
+        <div class="date-bar"><button class="date-btn on" data-date="today" id="t-today">今天</button><button class="date-btn" data-date="tomorrow" id="t-tomorrow">明天</button><button class="date-btn" data-date="dayafter" id="t-dayAfter">后天</button></div>
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="card" id="panel-confirm" style="display:none"><h2 id="t-confirmTitle">待确认 · 学生已提交 / 未提交网盘链接</h2><div id="confirmList"></div></div>
+    <div class="card" id="panel-remind" style="display:none"><h2 id="t-remindTitle">催交提醒 · 直播结束超过 3 天未提交网盘</h2><p style="font-size:13px;color:#94a3b8;margin:-6px 0 14px;line-height:1.6">逾期未提交的学生将被暂停预约直播间；点「提醒提交」后学生登录会看到弹窗，点「确认已提交」后学生即可恢复预约。</p><div id="remindList"></div></div>
+    <div class="card" id="panel-presubmit" style="display:none"><h2 id="t-preSubmitTitle">提前提交申请 · 待审批</h2><div id="preSubmitList"></div></div>
+    <div class="card" id="panel-score" style="display:none"><h2 id="t-scoreTitle">待打分 · 已确认网盘链接</h2><div id="scoreList"></div></div>
+    <div class="card" id="panel-scored" style="display:none"><h2 id="t-scoredTitle">已打分（需申请改分）</h2><div id="scoredList"></div></div>
+</div>
+
+<script>
+    const I18N = { zh: { pageTitle:'👨‍🏫 教师端 · 直播实践管理', logout:'← 退出', changePwd:'修改密码', tabBoard:'看板', tabConfirm:'待确认网盘链接', tabPreSubmit:'提前提交申请', tabScore:'待打分', tabScored:'已打分', boardTitle:'我的课程直播间看板', today:'今天', tomorrow:'明天', dayAfter:'后天', confirmTitle:'待确认 · 学生已提交 / 未提交网盘链接', preSubmitTitle:'提前提交申请 · 待审批', scoreTitle:'待打分 · 已确认网盘链接', scoredTitle:'已打分', room:'直播间', free:'空闲', bookedBy:'已被约', unavailable:'不可预约', nightClosed:'夜间不开放', noConfirm:'暂无待确认', noScore:'暂无待打分', noScored:'暂无已打分记录', course:'课程', members:'小组成员', netdisk:'网盘链接', submitTime:'提交时间', score:'分数', comment:'评语', scoreTime:'打分时间', confirm:'确认', reject:'驳回', submitScore:'提交全部打分', confirmText:'确认该网盘链接？', rejectText:'驳回该网盘链接？学生需要重新提交', inputScore:'请为每个组员输入分数', scoreOK:'打分成功', scorePlaceholder:'分数', commentPlaceholder:'评语', avgScore:'平均分', applyChange:'申请修改分数', pendingReview:'审批中', approved:'已通过', rejected:'已拒绝', applyTitle:'申请修改分数', oldScore:'原分数', newScore:'新分数', newComment:'新评语', reason:'修改原因', reasonRequired:'修改原因必填', submit:'提交申请', cancel:'取消', applySuccess:'改分申请已提交', cpTitle:'修改密码', cpHint:'设置新密码（至少 6 位）', cpOld:'原密码', cpNew:'新密码', cpConfirm:'确认新密码', cpSubmit:'提交修改', cpFillAll:'请填写所有字段', cpMismatch:'新密码不一致', cpTooShort:'新密码至少 6 位', cpSuccess:'密码修改成功', paTitle:'申请修改密码', paHint:'需要管理员审批', paOld:'原密码', paNew:'新密码', paConfirm:'确认新密码', paReason:'申请原因', paSubmit:'提交申请', paSuccess:'申请已提交', submittedTag:'已提交 · 待确认', notSubmittedTag:'未提交', notSubmittedYet:'学生尚未提交', canRejectHint:'（学生未提交，可驳回）', overdueTag:'⚠️ 已逾期', overdueHint:'（超过 3 天未提交，可确认已提交或驳回）', preSubmitEmpty:'暂无待审批', preApprove:'同意', preReject:'拒绝', preApproveConfirm:'同意该学生提前提交？', preRejectConfirm:'拒绝？', preApplyReason:'原因', preApplyTime:'申请时间', reviewComment:'审批意见', tabRemind:'催交提醒', remindTitle:'催交提醒 · 直播结束超过 3 天未提交网盘', remindEmpty:'暂无需要催交的学生', remindBtn:'提醒提交', remindSent:'提醒已发送', remindTimes:'已提醒 ', remindTimes2:' 次', remindLast:'最近提醒：', remindNever:'尚未提醒', remindDays:'逾期 ', remindDays2:' 天', remindConfirmBtn:'确认已提交', remindConfirmText:'确认该学生已提交网盘链接？确认后学生即可继续预约。', remindRejectBtn:'驳回', remindRejectText:'驳回该网盘链接？', remindSubmitted:'已提交 · 待确认', remindRejected:'已驳回 · 待重新提交', remindOverdue:'逾期未提交 · 学生已暂停预约' }, en: { pageTitle:'👨‍🏫 Teacher', logout:'← Logout', changePwd:'Change Pwd', tabBoard:'Board', tabConfirm:'Pending Confirm', tabPreSubmit:'Early Submit', tabScore:'Pending Score', tabScored:'Scored', boardTitle:'My Courses Board', today:'Today', tomorrow:'Tomorrow', dayAfter:'Day After', confirmTitle:'Pending Confirm', preSubmitTitle:'Early Submit Requests', scoreTitle:'Pending Score', scoredTitle:'Scored', room:'Room', free:'Free', bookedBy:'Booked', unavailable:'Unavailable', nightClosed:'Closed at night', noConfirm:'None', noScore:'None', noScored:'None', course:'Course', members:'Members', netdisk:'Netdisk', submitTime:'Submit Time', score:'Score', comment:'Comment', scoreTime:'Scored At', confirm:'Confirm', reject:'Reject', submitScore:'Submit', confirmText:'Confirm link?', rejectText:'Reject link?', inputScore:'Enter scores', scoreOK:'Submitted', scorePlaceholder:'Score', commentPlaceholder:'Comment', avgScore:'Avg', applyChange:'Request Change', pendingReview:'Pending', approved:'Approved', rejected:'Rejected', applyTitle:'Request Change', oldScore:'Original', newScore:'New Score', newComment:'New Comment', reason:'Reason', reasonRequired:'Required', submit:'Submit', cancel:'Cancel', applySuccess:'Submitted', cpTitle:'Change Password', cpHint:'Set a new password (min 6)', cpOld:'Current', cpNew:'New', cpConfirm:'Confirm', cpSubmit:'Submit', cpFillAll:'Fill all', cpMismatch:'Mismatch', cpTooShort:'Too short', cpSuccess:'Changed', paTitle:'Request Password Change', paHint:'Requires admin approval', paOld:'Current', paNew:'New', paConfirm:'Confirm', paReason:'Reason', paSubmit:'Submit', paSuccess:'Submitted', submittedTag:'Submitted', notSubmittedTag:'Not Submitted', notSubmittedYet:'Not submitted yet', canRejectHint:'(Can reject)', overdueTag:'⚠️ Overdue', overdueHint:'(Can reject)', preSubmitEmpty:'None', preApprove:'Approve', preReject:'Reject', preApproveConfirm:'Approve?', preRejectConfirm:'Reject?', preApplyReason:'Reason', preApplyTime:'Time', reviewComment:'Comment', tabRemind:'Remind', remindTitle:'Remind · Over 3 days without submission', remindEmpty:'Nothing to remind', remindBtn:'Remind', remindSent:'Reminder sent', remindTimes:'Reminded ', remindTimes2:' time(s)', remindLast:'Last: ', remindNever:'Never reminded', remindDays:'Overdue ', remindDays2:' day(s)', remindConfirmBtn:'Confirm submitted', remindConfirmText:'Confirm this student has submitted the link? Booking will resume.', remindRejectBtn:'Reject', remindRejectText:'Reject this link?', remindSubmitted:'Submitted · pending', remindRejected:'Rejected · resubmit needed', remindOverdue:'Overdue · booking paused' } };
+    let lang = localStorage.getItem('lang') || 'zh'; const T = k => I18N[lang][k] || k; let user = null; let teacherBoardDate = getToday(); let autoRefreshTimer = null;
+
+    function getToday() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getTomorrow() { const d = new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getDayAfter() { const d = new Date(); d.setDate(d.getDate()+2); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function dateFromKey(k) { return k === 'tomorrow' ? getTomorrow() : (k === 'dayafter' ? getDayAfter() : getToday()); }
+    function showToast(msg, isErr) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast ' + (isErr ? 'err' : 'ok'); t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+    function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    function setLang(l) { lang = l; localStorage.setItem('lang', l); document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en'; applyI18N(); if (user) { const activeTab = document.querySelector('.tabs button.on'); if (activeTab) { const tab = activeTab.dataset.tab; if (tab === 'board') loadBoard(); else if (tab === 'confirm') loadConfirm(); else if (tab === 'presubmit') loadPreSubmit(); else if (tab === 'score') loadPendingScore(); else if (tab === 'scored') loadScored(); else if (tab === 'remind') loadRemind(); } } }
+    function applyI18N() { document.getElementById('t-pageTitle').innerText = T('pageTitle'); document.getElementById('t-logout').innerText = T('logout'); document.getElementById('t-btnChangePwd').innerText = T('changePwd'); document.getElementById('t-tabBoard').innerText = T('tabBoard'); document.getElementById('t-tabConfirm').innerText = T('tabConfirm'); document.getElementById('t-tabPreSubmit').innerText = T('tabPreSubmit'); document.getElementById('t-tabScore').innerText = T('tabScore'); document.getElementById('t-tabScored').innerText = T('tabScored'); document.getElementById('t-boardTitle').innerText = T('boardTitle'); document.getElementById('t-today').innerText = T('today'); document.getElementById('t-tomorrow').innerText = T('tomorrow'); const tda = document.getElementById('t-dayAfter'); if (tda) tda.innerText = T('dayAfter'); document.getElementById('t-confirmTitle').innerText = T('confirmTitle'); document.getElementById('t-preSubmitTitle').innerText = T('preSubmitTitle'); document.getElementById('t-scoreTitle').innerText = T('scoreTitle'); document.getElementById('t-scoredTitle').innerText = T('scoredTitle'); document.getElementById('t-tabRemind').innerText = T('tabRemind'); document.getElementById('t-remindTitle').innerText = T('remindTitle'); document.getElementById('btn-zh').classList.toggle('on', lang === 'zh'); document.getElementById('btn-en').classList.toggle('on', lang === 'en'); }
+
+    document.querySelectorAll('.tabs button').forEach(b => { b.onclick = () => { document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on'); const tab = b.dataset.tab; ['board','confirm','remind','presubmit','score','scored'].forEach(t => { document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none'; }); if (tab === 'board') loadBoard(); if (tab === 'confirm') loadConfirm(); if (tab === 'presubmit') loadPreSubmit(); if (tab === 'score') loadPendingScore(); if (tab === 'scored') loadScored(); if (tab === 'remind') loadRemind(); }; });
+    document.querySelectorAll('.date-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('.date-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); teacherBoardDate = dateFromKey(b.dataset.date); loadBoard(); }; });
+    async function doLogout() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); await fetch('/api/logout', { method: 'POST' }); location.replace('/?timeout=1'); }
+
+    async function loadBoard() {
+        const wrap = document.getElementById('board'); if (!wrap.innerHTML) wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;grid-column:1/-1;">加载中...</div>';
+        try { const res = await fetch('/api/board?college=' + encodeURIComponent(user.college) + '&date=' + teacherBoardDate + '&teacherId=' + encodeURIComponent(user.id)); const data = await res.json(); if (!data.board) { wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#f87171;grid-column:1/-1;">看板加载失败</div>'; return; } let html = ''; data.board.forEach(roomData => { html += '<div class="room-col"><h3>' + T('room') + ' ' + roomData.room + '</h3>' + (roomData.location ? '<div class="room-loc" title="' + escapeHtml(roomData.location) + '">📍 ' + escapeHtml(roomData.location) + '</div>' : ''); roomData.slots.forEach(slot => { let cls, statusText; if (slot.status === 'available') { cls = 'available'; statusText = T('free'); } else if (slot.status === 'booked' && slot.booking) { cls = 'booked'; statusText = T('bookedBy') + ' · ' + slot.booking.studentName + (slot.booking.className ? ' (' + slot.booking.className + ')' : '') + ' · ' + slot.booking.course; } else { cls = 'unavailable'; statusText = slot.nightClosed ? T('nightClosed') : T('unavailable'); } html += `<div class="slot ${cls}"><div class="time">${slot.startTime} - ${slot.endTime}</div><div class="status">${statusText}</div></div>`; }); html += '</div>'; }); wrap.innerHTML = html; } catch (e) { wrap.innerHTML = '<div style="padding:20px;text-align:center;color:#f87171;grid-column:1/-1;">网络异常</div>'; }
+    }
+
+    async function loadConfirm() { const res = await fetch('/api/teacher/pending-confirm?teacherId=' + encodeURIComponent(user.id)); const data = await res.json(); const wrap = document.getElementById('confirmList'); if (data.list.length === 0) { wrap.innerHTML = '<div class="empty">' + T('noConfirm') + '</div>'; return; } wrap.innerHTML = ''; data.list.forEach(b => { const div = document.createElement('div'); div.className = 'item'; const isSubmitted = b.upload_status === 'submitted' && b.netdisk_url; const isOverdue = b.upload_status === 'overdue'; let statusTag; if (isSubmitted) statusTag = '<span class="tag orange">' + T('submittedTag') + '</span>'; else if (isOverdue) statusTag = '<span class="tag red">⚠️ ' + T('overdueTag') + '</span>'; else statusTag = '<span class="tag red">' + T('notSubmittedTag') + '</span>'; const membersHtml = (b.members || []).map(m => `<div class="member-score"><span class="name">${escapeHtml(m.name)}</span><span class="duty">${m.studentNo || m.student_no || ''} · ${escapeHtml(m.duty||'')}</span></div>`).join(''); const netdiskHtml = b.netdisk_url ? `<a href="${escapeHtml(b.netdisk_url)}" target="_blank" style="word-break:break-all">${escapeHtml(b.netdisk_url)}</a>` : '<span style="color:#64748b">' + T('notSubmittedYet') + '</span>'; let actionsHtml; if (isSubmitted) { actionsHtml = `<button class="sm green" onclick="doConfirm(${b.id}, 'confirm')">${T('confirm')}</button><button class="sm red" onclick="doConfirm(${b.id}, 'reject')">${T('reject')}</button>`; } else if (isOverdue) { actionsHtml = `<button class="sm green" onclick="doConfirm(${b.id}, 'confirm')">${T('remindConfirmBtn')}</button><button class="sm red" onclick="doConfirm(${b.id}, 'reject')">${T('reject')}</button><span style="color:#f87171;font-size:12px;margin-left:8px">${T('overdueHint')}</span>`; } else { actionsHtml = `<button class="sm red" onclick="doConfirm(${b.id}, 'reject')">${T('reject')}</button><span style="color:#94a3b8;font-size:12px;margin-left:8px">${T('canRejectHint')}</span>`; } div.innerHTML = `<div class="title">${escapeHtml(b.student_name || b.studentName || '')}（${b.student_no || b.studentNo || ''}） · ${T('room')} ${b.room} · ${b.date} ${b.st} ${statusTag}</div><div class="desc"><b>${T('course')}：</b>${escapeHtml(b.course)}</div><div class="desc"><b>${T('members')}：</b></div>${membersHtml}<div class="desc"><b>${T('netdisk')}：</b>${netdiskHtml}</div><div class="desc"><b>${T('submitTime')}：</b>${b.uploaded_at || '-'}</div><div class="actions">${actionsHtml}</div>`; wrap.appendChild(div); }); }
+
+    async function doConfirm(bookingId, action) { if (!confirm(action === 'confirm' ? T('confirmText') : T('rejectText'))) return; const res = await fetch('/api/teacher/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, action }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '操作失败', true); return; } showToast(data.message || '操作成功', false); loadConfirm(); loadRemind(); }
+
+    // 催交提醒：直播结束超过 3 天未提交网盘的学生
+    async function loadRemind() {
+        const wrap = document.getElementById('remindList'); if (!wrap) return;
+        let data;
+        try { const res = await fetch('/api/teacher/remind-list?teacherId=' + encodeURIComponent(user.id)); data = await res.json(); } catch (e) { wrap.innerHTML = '<div class="empty">网络异常，请刷新</div>'; return; }
+        const list = (data && data.list) || [];
+        const tabBtn = document.getElementById('t-tabRemind');
+        if (tabBtn) tabBtn.innerText = T('tabRemind') + (list.length ? ' (' + list.length + ')' : '');
+        if (!list.length) { wrap.innerHTML = '<div class="empty">' + T('remindEmpty') + '</div>'; return; }
+        wrap.innerHTML = '';
+        list.forEach(b => {
+            const div = document.createElement('div'); div.className = 'item';
+            const isSubmitted = b.netdisk_url && b.confirm_status === 'pending_confirm';
+            let tag;
+            if (b.confirm_status === 'rejected') tag = '<span class="tag red">' + T('remindRejected') + '</span>';
+            else if (isSubmitted) tag = '<span class="tag orange">' + T('remindSubmitted') + '</span>';
+            else tag = '<span class="tag red">⚠️ ' + T('remindOverdue') + '</span>';
+            const netdiskHtml = b.netdisk_url ? `<a href="${escapeHtml(b.netdisk_url)}" target="_blank" style="word-break:break-all">${escapeHtml(b.netdisk_url)}</a>` : '<span style="color:#64748b">' + T('notSubmittedYet') + '</span>';
+            const times = Number(b.remind_times || 0);
+            const remindInfo = times > 0
+                ? T('remindTimes') + times + T('remindTimes2') + ' · ' + T('remindLast') + String(b.last_remind_at || '').slice(0, 16)
+                : T('remindNever');
+            div.innerHTML = `<div class="title">${escapeHtml(b.student_name || '')}（${b.student_no}） · ${T('room')} ${b.room} · ${b.date} ${b.st} ${tag}</div>
+                <div class="desc"><b>${T('course')}：</b>${escapeHtml(b.course)}</div>
+                <div class="desc"><b>${T('remindDays')}</b><span style="color:#f87171;font-weight:600">${Number(b.overdue_days || 0)}${T('remindDays2')}</span> · ${remindInfo}</div>
+                <div class="desc"><b>${T('netdisk')}：</b>${netdiskHtml}</div>
+                <div class="actions">
+                    <button class="sm orange" onclick="doRemind(${b.id})">${T('remindBtn')}</button>
+                    <button class="sm green" onclick="doConfirm(${b.id}, 'confirm')">${T('remindConfirmBtn')}</button>
+                    <button class="sm red" onclick="doConfirm(${b.id}, 'reject')">${T('remindRejectBtn')}</button>
+                </div>`;
+            wrap.appendChild(div);
+        });
+    }
+    async function doRemind(bookingId) {
+        const res = await fetch('/api/teacher/remind-submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, teacherId: user.id }) });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.message || '发送失败', true); return; }
+        showToast(data.message || T('remindSent'), false);
+        loadRemind();
+    }
+
+    async function loadPreSubmit() { const res = await fetch('/api/teacher/pre-submit-pending?teacherId=' + encodeURIComponent(user.id)); const data = await res.json(); const wrap = document.getElementById('preSubmitList'); if (!data.list || data.list.length === 0) { wrap.innerHTML = '<div class="empty">' + T('preSubmitEmpty') + '</div>'; return; } wrap.innerHTML = ''; data.list.forEach(r => { const div = document.createElement('div'); div.className = 'item'; div.innerHTML = `<div class="title">${escapeHtml(r.student_name)}（${r.student_no}） · ${T('room')} ${r.room} · ${r.date} ${r.st}</div><div class="desc"><b>${T('course')}：</b>${escapeHtml(r.course || '')}</div><div class="desc"><b>${T('preApplyReason')}：</b>${escapeHtml(r.reason)}</div><div class="desc"><b>${T('preApplyTime')}：</b>${r.apply_at || ''}</div><div class="field" style="margin-top:8px"><label>${T('reviewComment')}</label><input id="pr-${r.id}" placeholder="${T('reviewComment')}"></div><div class="actions"><button class="sm green" onclick="doPreReview(${r.id}, 'approve')">${T('preApprove')}</button><button class="sm red" onclick="doPreReview(${r.id}, 'reject')">${T('preReject')}</button></div>`; wrap.appendChild(div); }); }
+
+    async function doPreReview(requestId, action) { if (!confirm(action === 'approve' ? T('preApproveConfirm') : T('preRejectConfirm'))) return; const el = document.getElementById('pr-' + requestId); const comment = el ? el.value.trim() : ''; const res = await fetch('/api/teacher/pre-submit-review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId, action, comment, reviewerId: user.id }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '审批失败', true); return; } showToast(data.message || '审批成功', false); loadPreSubmit(); }
+
+    async function loadPendingScore() { const res = await fetch('/api/teacher/pending-score?teacherId=' + encodeURIComponent(user.id)); const data = await res.json(); const wrap = document.getElementById('scoreList'); if (data.list.length === 0) { wrap.innerHTML = '<div class="empty">' + T('noScore') + '</div>'; return; } wrap.innerHTML = ''; data.list.forEach(b => { const div = document.createElement('div'); div.className = 'item'; const membersHtml = (b.members || []).map(m => `<div class="member-score"><span class="name">${escapeHtml(m.name)}</span><span class="duty">${m.studentNo || m.student_no || ''} · ${escapeHtml(m.duty || '')}</span><input class="score-input" type="number" min="0" max="100" id="score-${b.id}-${m.studentNo || m.student_no}" placeholder="${T('scorePlaceholder')}"><input class="comment-input" id="comment-${b.id}-${m.studentNo || m.student_no}" placeholder="${T('commentPlaceholder')}"></div>`).join(''); div.innerHTML = `<div class="title">${escapeHtml(b.student_name || b.studentName || '')}（${b.student_no || b.studentNo || ''}） · ${T('room')} ${b.room} · ${b.date} ${b.st}</div><div class="desc"><b>${T('course')}：</b>${escapeHtml(b.course)}</div><div class="desc"><b>${T('netdisk')}：</b><a href="${escapeHtml(b.netdisk_url)}" target="_blank" style="word-break:break-all">${escapeHtml(b.netdisk_url)}</a></div><div class="desc" style="margin-top:8px"><b>${T('members')}：</b></div>${membersHtml}<div class="actions"><button class="sm" onclick="submitAllScores(${b.id})">${T('submitScore')}</button></div>`; wrap.appendChild(div); }); }
+
+    async function submitAllScores(bookingId) { const inputs = document.querySelectorAll(`[id^="score-${bookingId}-"]`); const scores = []; let invalid = false; inputs.forEach(inp => { const studentNo = inp.id.replace(`score-${bookingId}-`, ''); const val = inp.value.trim(); if (!val) { invalid = true; return; } const commentEl = document.getElementById(`comment-${bookingId}-${studentNo}`); scores.push({ studentNo, score: Number(val), comment: commentEl ? commentEl.value.trim() : '' }); }); if (invalid || scores.length === 0) { showToast(T('inputScore'), true); return; } const res = await fetch('/api/teacher/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, teacherId: user.id, scores }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '打分失败', true); return; } showToast(T('scoreOK'), false); loadPendingScore(); }
+
+    async function loadScored() { const res = await fetch('/api/teacher/scored?teacherId=' + encodeURIComponent(user.id)); const data = await res.json(); const wrap = document.getElementById('scoredList'); if (data.list.length === 0) { wrap.innerHTML = '<div class="empty">' + T('noScored') + '</div>'; return; } wrap.innerHTML = ''; let myReqs = []; try { const r2 = await fetch('/api/teacher/score-change-list?teacherId=' + encodeURIComponent(user.id)); if (r2.ok) { const d2 = await r2.json(); myReqs = d2.list || []; } } catch(e) {} data.list.forEach(b => { const div = document.createElement('div'); div.className = 'item'; const memberLines = (b.scores || []).map(s => { const reqs = myReqs.filter(r => r.booking_id === b.id && r.student_no === s.student_no); const pendingReq = reqs.find(r => r.status === 'pending'); const lastReq = reqs[0]; let reqTag = ''; if (pendingReq) reqTag = `<span class="tag orange">${T('pendingReview')}</span>`; else if (lastReq && lastReq.status === 'approved') reqTag = `<span class="tag green">${T('approved')}</span>`; else if (lastReq && lastReq.status === 'rejected') reqTag = `<span class="tag red">${T('rejected')}</span>`; const changeBtn = (!pendingReq) ? `<button class="sm orange" onclick="openChangeScoreModal(${b.id}, '${s.student_no}', '${escapeHtml(s.student_name)}', ${s.score})">${T('applyChange')}</button>` : ''; return `<div class="member-score"><span class="name">${escapeHtml(s.student_name)}</span><span class="duty">${s.student_no} · ${escapeHtml(s.duty || '')}</span><span style="color:#34d399;font-weight:600">${s.score} ${T('score')}</span><span style="color:#94a3b8;font-size:12px">${escapeHtml(s.comment || '')}</span>${reqTag}${changeBtn}</div>`; }).join(''); div.innerHTML = `<div class="title">${escapeHtml(b.student_name || b.studentName || '')}（${b.student_no || b.studentNo || ''}） · ${T('room')} ${b.room} · ${b.date} ${b.st}</div><div class="desc"><b>${T('course')}：</b>${escapeHtml(b.course)}</div><div class="desc" style="margin-top:6px"><b>${T('avgScore')}：</b><span style="color:#34d399;font-weight:600">${b.score}</span> · ${T('scoreTime')}：${b.scored_at || ''}</div><div class="desc" style="margin-top:6px"><b>${T('members')}：</b></div>${memberLines}`; wrap.appendChild(div); }); }
+
+    function openChangeScoreModal(bookingId, studentNo, studentName, oldScore) { const html = `<div class="modal" id="changeScoreModal"><div class="box"><h3>${T('applyTitle')}</h3><div class="field"><label>${studentName}（${studentNo}） · ${T('oldScore')}：<b>${oldScore}</b></label></div><div class="field"><label>${T('newScore')} <span style="color:#f87171">*</span></label><input id="csNewScore" type="number" min="0" max="100" placeholder="0-100"></div><div class="field"><label>${T('newComment')}</label><input id="csNewComment" placeholder="${T('commentPlaceholder')}"></div><div class="field"><label>${T('reason')} <span style="color:#f87171">*</span></label><textarea id="csReason" placeholder="${T('reasonRequired')}"></textarea></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('changeScoreModal').remove()">${T('cancel')}</button><button class="sm" onclick="submitChangeScore(${bookingId}, '${studentNo}')">${T('submit')}</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+
+    async function submitChangeScore(bookingId, studentNo) { const newScore = document.getElementById('csNewScore').value; const newComment = document.getElementById('csNewComment').value.trim(); const reason = document.getElementById('csReason').value.trim(); if (!newScore) { showToast(T('inputScore'), true); return; } if (!reason) { showToast(T('reasonRequired'), true); return; } const res = await fetch('/api/teacher/score-change-apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookingId, studentNo, newScore: Number(newScore), newComment, reason, teacherId: user.id }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '提交失败', true); return; } showToast(T('applySuccess'), false); document.getElementById('changeScoreModal').remove(); loadScored(); }
+
+    function checkMustChangePassword() { if (user && user.mustChangePassword) showChangePasswordModal(); }
+    function showChangePasswordModal() { const html = `<div class="modal" id="cpModal"><div class="box"><h3>${T('cpTitle')}</h3><p style="font-size:13px;color:#94a3b8;margin-bottom:14px">${T('cpHint')}</p><div class="field"><label>${T('cpOld')}</label><input id="cpOld" type="password"></div><div class="field"><label>${T('cpNew')}</label><input id="cpNew" type="password"></div><div class="field"><label>${T('cpConfirm')}</label><input id="cpConfirm" type="password"></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('cpModal').remove()">${T('cancel')}</button><button class="sm" onclick="submitChangePassword()">${T('cpSubmit')}</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function submitChangePassword() { const oldPwd = document.getElementById('cpOld').value; const newPwd = document.getElementById('cpNew').value; const cfmPwd = document.getElementById('cpConfirm').value; if (!oldPwd || !newPwd || !cfmPwd) { showToast(T('cpFillAll'), true); return; } if (newPwd !== cfmPwd) { showToast(T('cpMismatch'), true); return; } if (newPwd.length < 6) { showToast(T('cpTooShort'), true); return; } const res = await fetch('/api/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }) }); const data = await res.json(); if (!res.ok) { showToast(data.message || '修改失败', true); return; } showToast(T('cpSuccess'), false); document.getElementById('cpModal').remove(); user.mustChangePassword = false; }
+
+    function checkImpersonating(imp) { if (!imp || !imp.byAdmin) return; const old = document.getElementById('impersonateBar'); if (old) old.remove(); const div = document.createElement('div'); div.id = 'impersonateBar'; div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#78350f;padding:10px;z-index:99999;display:flex;justify-content:space-between;align-items:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);gap:10px;flex-wrap:wrap'; div.innerHTML = `<span>⚠️ 测试模式：<b>${user.name}</b></span><div style="display:flex;gap:8px"><button onclick="openImpersonatePicker()" style="padding:4px 10px;background:#1e3a8a;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">切换</button><button onclick="restoreAdmin()" style="padding:4px 10px;background:#78350f;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">返回</button></div>`; document.body.appendChild(div); }
+    async function restoreAdmin() { const res = await fetch('/api/admin/restore', { method: 'POST' }); const data = await res.json(); if (!res.ok) { alert(data.message); return; } location.href = data.redirect + '?t=' + Date.now(); }
+    async function openImpersonatePicker() { const old = document.getElementById('impersonatePickerModal'); if (old) old.remove(); const res = await fetch('/api/admin/test-accounts'); if (!res.ok) { alert('无法加载'); return; } const data = await res.json(); const a = data.accounts; function makeOptions(list, role, roleLabel) { if (!list || list.length === 0) return ''; return `<optgroup label="${roleLabel}">` + list.map(u => `<option value="${role}|${u.id}">${u.name || ''}（${u.id}）</option>`).join('') + `</optgroup>`; } const html = `<div class="modal" id="impersonatePickerModal" style="z-index:100000"><div class="box"><h3>切换测试身份</h3><div class="field"><label>选择账户</label><select id="impersonateSelect" style="width:100%;padding:10px;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:16px;background:rgba(0,0,0,0.3);color:#fff;">${makeOptions(a.students, 'student', '👨‍🎓 学生')}${makeOptions(a.teachers, 'teacher', '👨‍🏫 教师')}${makeOptions(a.directors, 'director', '📋 主任')}${makeOptions(a.deans, 'dean', '🏛️ 三级院长')}</select></div><div class="modal-actions"><button class="sm gray" onclick="document.getElementById('impersonatePickerModal').remove()">取消</button><button class="sm" onclick="doImpersonateSwitch()">切换</button></div></div></div>`; document.body.insertAdjacentHTML('beforeend', html); }
+    async function doImpersonateSwitch() { const val = document.getElementById('impersonateSelect').value; if (!val) return; const [targetRole, targetId] = val.split('|'); const res = await fetch('/api/admin/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetRole, targetId }) }); const data = await res.json(); if (!res.ok) { alert(data.message); return; } setTimeout(() => { location.href = data.redirect + '?t=' + Date.now(); }, 800); }
+    async function loadRandomQuote() { try { const res = await fetch('/api/quotes/random?t=' + Date.now()); const data = await res.json(); if (data.code === 'OK' && data.quote) { const box = document.getElementById('quoteBanner'); box.style.display = 'block'; document.getElementById('quoteContentInner').innerText = data.quote.content; document.getElementById('quoteAuthorInner').innerText = data.quote.author; } } catch (e) {} } loadRandomQuote();
+    const innerEventSource = new EventSource('/api/quotes/stream'); innerEventSource.onmessage = (event) => { if (event.data === 'refresh') loadRandomQuote(); }; window.addEventListener('beforeunload', () => { innerEventSource.close(); });
+
+    // 防闪屏初始化逻辑
+    (async () => {
+        try {
+            const meRes = await fetch('/api/me?t=' + Date.now());
+            if (!meRes.ok) { window.location.replace('/?timeout=1'); return; }
+            const meData = await meRes.json();
+            user = meData.user;
+            checkImpersonating(meData.impersonating);
+            if (user.role !== 'teacher') { window.location.replace('/?timeout=1'); return; }
+
+            document.getElementById('userInfo').innerText = user.name + ' · ' + user.college + ' · ' + user.id;
+            applyI18N();
+            await loadBoard();
+            checkMustChangePassword();
+            loadRemind();
+            const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.remove();
+
+            autoRefreshTimer = setInterval(() => { if (!user || document.hidden) return; const activeTab = document.querySelector('.tabs button.on'); if (!activeTab) return; const tab = activeTab.dataset.tab; if (tab === 'board') loadBoard(); else if (tab === 'confirm') loadConfirm(); else if (tab === 'presubmit') loadPreSubmit(); else if (tab === 'score') loadPendingScore(); else if (tab === 'scored') loadScored(); else if (tab === 'remind') loadRemind(); }, 60000);
+
+            window.onbeforeunload = function() { if (autoRefreshTimer) clearInterval(autoRefreshTimer); };
+        } catch(e) {
+            const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.innerText = "网络异常，请刷新重试";
+        }
+    })();
+</script>
+
+<!-- ===== 联系管理员（点击复制邮箱） ===== -->
+<style>
+  #caFab { position: fixed; right: 12px; bottom: 12px; z-index: 9000; background: rgba(30,41,59,.94); color: #e2e8f0;
+           border: 1px solid rgba(148,163,184,.45); border-radius: 999px; padding: 8px 13px; font-size: 12px; line-height: 1;
+           cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); font-family: inherit; }
+  #caFab:active { transform: scale(.97); }
+  #caMask { position: fixed; inset: 0; background: rgba(0,0,0,.65); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            z-index: 99998; display: none; align-items: center; justify-content: center; padding: 16px; }
+  #caBox { width: 100%; max-width: 380px; background: #1b1130; border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+           padding: 20px; color: #e2e8f0; box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+  #caBox h3 { font-size: 16px; margin: 0 0 12px; color: #f8fafc; }
+  #caMailBtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px;
+               background: rgba(59,130,246,.14); border: 1px solid rgba(59,130,246,.5); border-radius: 10px; color: #93c5fd;
+               font-size: 14px; cursor: pointer; font-family: inherit; }
+  #caMailBtn.copied { border-color: #34d399; background: rgba(52,211,153,.14); }
+  #caCopyTip { font-size: 11px; color: #cbd5e1; background: rgba(255,255,255,.12); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  #caBox .ca-note { font-size: 12px; line-height: 1.7; color: #94a3b8; margin-top: 10px; }
+  #caBox .ca-note b { color: #e2e8f0; }
+  #caBox .ca-close { width: 100%; margin-top: 14px; padding: 9px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+                     border-radius: 8px; color: #cbd5e1; font-size: 13px; cursor: pointer; font-family: inherit; }
+  #caToast { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: rgba(5,150,105,.96); color: #fff;
+             padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 100001; display: none; max-width: 80vw; text-align: center; }
+</style>
+<div id="caFab" onclick="caOpen()">✉️ 联系管理员</div>
+<div id="caMask" onclick="if(event.target===this)caClose()">
+  <div id="caBox">
+    <h3>✉️ 联系管理员</h3>
+    <button type="button" id="caMailBtn" onclick="caCopy()">
+      <span id="caMailText">ranliu6953@163.com</span>
+      <span id="caCopyTip">点击复制</span>
+    </button>
+    <div class="ca-note">
+      邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：
+      出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。
+    </div>
+    <button type="button" class="ca-close" onclick="caClose()">关闭</button>
+  </div>
+</div>
+<div id="caToast"></div>
+<script>
+(function () {
+  var EMAIL = 'ranliu6953@163.com';
+  function toast(msg) {
+    var t = document.getElementById('caToast'); if (!t) return;
+    t.innerText = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2000);
+  }
+  function markCopied() {
+    var b = document.getElementById('caMailBtn'), tip = document.getElementById('caCopyTip');
+    if (b) { b.classList.add('copied'); setTimeout(function () { b.classList.remove('copied'); }, 2200); }
+    if (tip) { tip.innerText = '已复制'; setTimeout(function () { tip.innerText = '点击复制'; }, 2200); }
+    toast('邮箱已复制：' + EMAIL);
+  }
+  window.caOpen = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'flex'; };
+  window.caClose = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'none'; };
+  window.caCopy = function () {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = EMAIL; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, EMAIL.length);
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { markCopied(); return; }
+      var el = document.getElementById('caMailText');
+      if (el) { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('复制失败，请长按选中的邮箱手动复制');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(EMAIL).then(markCopied).catch(fallback);
+    } else { fallback(); }
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') caClose(); });
+})();
+</script>
+</body>
+</html>

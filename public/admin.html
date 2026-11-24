@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin - Live Practice</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #120822 0%, #1e1038 50%, #0f071f 100%); color: #cbd5e1; padding: 20px; min-height: 100vh; position: relative; }
+
+        /* 院徽水印 */
+        .watermark-logo { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 820px; height: 820px; mix-blend-mode: screen; opacity: 0.1; z-index: -1; pointer-events: none; object-fit: contain; filter: drop-shadow(0 0 24px rgba(96, 165, 250, 0.4)) brightness(1.1) blur(2px); }
+
+        .wrap { max-width: 1300px; margin: 0 auto; position: relative; z-index: 1; }
+        .card { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+
+        h1 { font-size: 22px; margin-bottom: 6px; color: #fff; }
+        h2 { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; }
+        h3 { font-size: 15px; margin: 16px 0 8px; color: #cbd5e1; }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center; }
+        .info { font-size: 13px; color: #94a3b8; }
+        .right-bar { display: flex; gap: 10px; align-items: center; }
+        .lang-switch { display: flex; gap: 4px; }
+        .lang-switch button { padding: 4px 10px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 12px; color: #cbd5e1; }
+        .lang-switch button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; white-space: nowrap; padding-bottom: 4px; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tabs button { padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 8px; cursor: pointer; font-size: 14px; flex-shrink: 0; color: #cbd5e1; transition: all 0.3s; }
+        .tabs button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        .bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .bar input, .bar select { padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-size: 14px; background: rgba(0,0,0,0.3); color: #fff; }
+        .bar input::placeholder { color: #64748b; }
+        .bar button { padding: 8px 14px; border: none; background: #3b82f6; color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+
+        .date-bar button { padding: 8px 14px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .date-bar button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .room-col { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); }
+        .room-col h3 { font-size: 15px; text-align: center; margin-bottom: 4px; color: #fff; }
+        .room-col .room-loc { font-size: 11px; line-height: 1.4; text-align: center; color: #93c5fd; margin-bottom: 10px; padding: 0 2px; word-break: break-all; }
+        .slot { border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 13px; text-align: center; }
+        .slot.available { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); }
+        .slot.booked { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); }
+        .slot.unavailable { border-color: rgba(100,116,139,0.3); background: rgba(100,116,139,0.1); color: #64748b; }
+        .slot .time { font-weight: 600; color: #fff; }
+        .slot .status { margin-top: 4px; color: #94a3b8; font-size: 12px; }
+        .slot.booked .status { color: #fca5a5; }
+
+        .item { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.2); }
+        .item .title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #fff; }
+        .desc { font-size: 13px; color: #cbd5e1; margin: 4px 0; line-height: 1.7; word-break: break-all; }
+
+        button.sm { padding: 6px 12px; font-size: 13px; border-radius: 5px; border: none; cursor: pointer; background: #3b82f6; color: #fff; }
+        button.sm.gray { background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
+        button.sm.red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+        button.sm.green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); }
+        button.sm.orange { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+
+        .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 100000; font-size: 14px; box-shadow: 0 10px 25px rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+        .toast.err { background: rgba(220,38,38,0.9); }
+        .toast.ok { background: rgba(5,150,105,0.9); }
+        .empty { text-align: center; color: #64748b; padding: 20px; font-size: 13px; }
+
+        /* 完善状态面板的卡片样式 */
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .stat-card { border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 14px; background: rgba(255,255,255,0.05); transition: all 0.3s; }
+        .stat-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+        .stat-card.ok { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05); }
+        .stat-card.warn { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.05); }
+        .stat-card.err { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+        .stat-card .label { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+        .stat-card .value { font-size: 20px; font-weight: 600; color: #fff; }
+        .stat-card .sub { font-size: 11px; color: #64748b; margin-top: 4px; }
+        .progress { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+        .progress > div { height: 100%; background: #3b82f6; transition: width .3s; }
+        .progress.warn > div { background: #f59e0b; }
+        .progress.err > div { background: #ef4444; }
+
+        .online-badge { padding: 6px 12px; border-radius: 6px; background: rgba(59,130,246,0.2); color: #93c5fd; font-size: 13px; border: 1px solid rgba(59,130,246,0.3); }
+
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+        th, td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: #cbd5e1; }
+        th { background: rgba(0,0,0,0.2); font-weight: 600; color: #94a3b8; }
+
+        #loadingOverlay { position: fixed; inset: 0; background: #0f071f; z-index: 999999; display: flex; justify-content: center; align-items: center; font-size: 16px; color: #94a3b8; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; } .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .right-bar { width: 100%; justify-content: space-between; } .board { grid-template-columns: 1fr; }
+            .bar { flex-direction: column; align-items: stretch; } .bar input, .bar select, .bar button { width: 100% !important; }
+            .status-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div id="loadingOverlay">正在进入管理员后台，请稍候...</div>
+<img class="watermark-logo" src="/logo.png" alt="院徽水印">
+
+<div class="wrap">
+    <div class="card">
+        <div class="topbar">
+            <div><h1 id="t-pageTitle">⚙️ 管理员后台 · 直播实践总览</h1><div class="info" id="userInfo"></div></div>
+            <div class="right-bar">
+                <div class="lang-switch"><button id="btn-zh" class="on" onclick="setLang('zh')">中文</button><button id="btn-en" onclick="setLang('en')">EN</button></div>
+                <a href="javascript:void(0)" onclick="doLogout()" id="t-logout" style="font-size:14px;text-decoration:none;color:#60a5fa;">← 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="on" data-tab="status" id="t-tabStatus">服务器状态</button>
+        <button data-tab="logs" id="t-tabLogs">操作日志</button>
+        <button data-tab="users" id="t-tabUsers">用户管理</button>
+        <button data-tab="test" id="t-tabTest">测试模块</button>
+        <button data-tab="board" id="t-tabBoard">直播间看板</button>
+        <button data-tab="quotes" id="t-tabQuotes">语录管理</button>
+        <button data-tab="apply" id="t-tabApply">管理员申请</button>
+    </div>
+
+    <!-- 状态面板 -->
+    <div class="card" id="panel-status">
+        <h2 id="t-statusTitle">实时运行状态（每 10 秒自动刷新）</h2>
+        <div class="status-grid" id="statusGrid"></div>
+        <div id="onlineRow" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+    </div>
+
+    <!-- 日志面板 -->
+    <div class="card" id="panel-logs" style="display:none">
+        <h2>系统日志查看</h2>
+        <div class="bar">
+            <input type="date" id="logDate" style="width: 160px;">
+            <select id="logType" style="width: 160px;">
+                <option value="all">全部日志</option>
+                <option value="action">仅操作日志</option>
+                <option value="error">仅看报错信息 🔥</option>
+            </select>
+            <button onclick="loadLogs()">查询</button>
+        </div>
+        <div class="table-wrapper">
+            <table><thead><tr><th>时间</th><th>操作人</th><th>角色</th><th>动作</th><th>详情</th><th>IP</th></tr></thead><tbody id="logList"></tbody></table>
+        </div>
+    </div>
+
+    <!-- 用户管理 -->
+    <div class="card" id="panel-users" style="display:none">
+        <h2>用户管理 · 重置密码</h2>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:14px">重置后，该用户账号将自动解锁，且下次登录时会被强制要求修改密码。</p>
+        <div id="allUsersList" class="table-wrapper"></div>
+    </div>
+
+    <!-- 测试模块 -->
+    <div class="card" id="panel-test" style="display:none">
+        <h2>测试模块 · 快速切换账户</h2>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:12px">用于进入学生/教师等账号复现问题。系统管理员可直接切换；二级管理员需先提交申请，由 admin 批准后一次性进入（24 小时内有效）。</p>
+        <div id="testAccounts" class="table-wrapper"></div>
+    </div>
+
+    <!-- 看板 -->
+    <div class="card" id="panel-board" style="display:none">
+        <h2>全部直播间看板</h2>
+        <div class="bar">
+            <input id="collegeInput" placeholder="学院名称（默认：计算机学院）" style="flex:1;min-width:200px;">
+            <button onclick="loadBoard()">查看</button>
+        </div>
+        <div class="date-bar" style="display:flex;gap:8px;margin-bottom:12px">
+            <button id="t-today" class="date-btn on" data-date="today" style="flex:1">今天</button>
+            <button id="t-tomorrow" class="date-btn" data-date="tomorrow" style="flex:1">明天</button>
+            <button id="t-dayAfter" class="date-btn" data-date="dayafter" style="flex:1">后天</button>
+        </div>
+        <div class="board" id="board"></div>
+    </div>
+
+    <!-- 语录管理 -->
+    <div class="card" id="panel-quotes" style="display:none">
+        <h2 id="t-quotesTitle">语录管理</h2>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:14px">
+            语录显示在学生端和教师端页面顶部，每次进入随机展示一条。增删后，正在浏览的页面会自动换一条（无需手动刷新）。
+        </p>
+        <div class="bar">
+            <input id="quoteContent" maxlength="200" placeholder="语录内容（必填，最多 200 字）" style="flex:1;min-width:240px">
+            <input id="quoteAuthor" maxlength="30" placeholder="作者（可留空）" style="width:150px">
+            <button onclick="addQuote()" id="t-quoteAdd">添加语录</button>
+            <button onclick="loadQuotes()" style="background:#475569">刷新</button>
+        </div>
+        <div id="quoteList"></div>
+    </div>
+
+    <!-- 管理员申请 -->
+    <div class="card" id="panel-apply" style="display:none">
+        <h2 id="t-applyTitle">管理员操作申请</h2>
+        <p id="applyHint" style="font-size:13px;color:#94a3b8;margin-bottom:14px"></p>
+        <div class="tabs" style="margin-bottom:12px">
+            <button class="on" data-applyfilter="pending" id="t-applyPending">待处理</button>
+            <button data-applyfilter="history" id="t-applyHistory">历史记录</button>
+        </div>
+        <div id="applyList"></div>
+    </div>
+</div>
+
+<script>
+    const I18N = {
+        zh: {
+            pageTitle:'⚙️ 管理员后台 · 直播实践总览', logout:'← 退出登录', tabStatus:'服务器状态', tabLogs:'操作日志', tabUsers:'用户管理', tabTest:'测试模块', tabBoard:'直播间看板', tabApply:'管理员申请', tabQuotes:'语录管理', quotesTitle:'语录管理', quoteAdd:'添加语录',
+            statusTitle:'实时运行状态（每 10 秒自动刷新）', today:'今天', tomorrow:'明天', dayAfter:'后天', room:'直播间', free:'空闲', bookedBy:'已被约', unavailable:'不可预约', nightClosed:'夜间不开放',
+            uptime:'运行时间', startedAt:'启动时间', nodeVer:'Node 版本', platform:'操作系统', hostname:'主机名', reqCount:'请求总数', procMem:'进程内存', sysMem:'系统内存', sysMemUsed:'系统内存使用率', cpuInfo:'CPU', cpuCores:'核心数', loadAvg:'负载', dbStatus:'数据库状态', dbLatency:'数据库延迟',
+            onlineTitle:'在线用户', statBookings:'总预约数', statActive:'有效预约', statPendingConfirm:'待确认', statPendingScore:'待打分',
+            days:'天', hours:'小时', mins:'分钟', secs:'秒', connected:'已连接', error:'错误',
+            /* 补全了这里的中文字典 */
+            roleStudent:'学生', roleTeacher:'教师', roleDirector:'主任', roleDean:'三级院长', roleAdmin:'管理员'
+        },
+        en: {
+            pageTitle:'⚙️ Admin Overview', logout:'← Logout', tabStatus:'Status', tabLogs:'Logs', tabUsers:'Users', tabTest:'Test', tabBoard:'Board', tabApply:'Admin Requests', tabQuotes:'Quotes', quotesTitle:'Quotes', quoteAdd:'Add Quote',
+            statusTitle:'Real-time Status (Refresh 10s)', today:'Today', tomorrow:'Tomorrow', dayAfter:'Day After', room:'Room', free:'Free', bookedBy:'Booked', unavailable:'Unavailable', nightClosed:'Closed at night',
+            uptime:'Uptime', startedAt:'Started At', nodeVer:'Node Version', platform:'OS', hostname:'Hostname', reqCount:'Total Requests', procMem:'Process Memory', sysMem:'System Memory', sysMemUsed:'System Memory Usage', cpuInfo:'CPU', cpuCores:'Cores', loadAvg:'Load Avg', dbStatus:'DB Status', dbLatency:'DB Latency',
+            onlineTitle:'Online Users', statBookings:'Total Bookings', statActive:'Active Bookings', statPendingConfirm:'Pending Confirm', statPendingScore:'Pending Score',
+            days:'d', hours:'h', mins:'m', secs:'s', connected:'Connected', error:'Error',
+            /* 补全英文 */
+            roleStudent:'Student', roleTeacher:'Teacher', roleDirector:'Director', roleDean:'Dean', roleAdmin:'Admin'
+        }
+    };
+    let lang = localStorage.getItem('lang') || 'zh'; const T = k => I18N[lang][k] || k;
+    let user = null; let boardDate = getToday(); let statusTimer = null;
+    let isSuper = false; let applyFilter = 'pending';   // 只有 admin 是超级管理员，其他管理员只能提交申请
+
+    function getToday() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getTomorrow() { const d = new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getDayAfter() { const d = new Date(); d.setDate(d.getDate()+2); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function dateFromKey(k) { return k === 'tomorrow' ? getTomorrow() : (k === 'dayafter' ? getDayAfter() : getToday()); }
+    function showToast(msg, isErr) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast ' + (isErr ? 'err' : 'ok'); t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+    function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+    function fmtBytes(n){if(n<1024)return n+' B';if(n<1024*1024)return (n/1024).toFixed(1)+' KB';if(n<1024*1024*1024)return (n/1024/1024).toFixed(1)+' MB';return (n/1024/1024/1024).toFixed(2)+' GB';}
+    function fmtUptime(sec){ const d = Math.floor(sec/86400); const h = Math.floor((sec%86400)/3600); const m = Math.floor((sec%3600)/60); const s = sec%60; let parts = []; if (d) parts.push(d + T('days')); if (h) parts.push(h + T('hours')); if (m) parts.push(m + T('mins')); parts.push(s + T('secs')); return parts.join(' '); }
+
+    function setLang(l) {
+        lang = l; localStorage.setItem('lang', l); document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en'; applyI18N();
+        if (user) { const tab = document.querySelector('.tabs button[data-tab].on')?.dataset.tab; if(tab === 'status') loadStatus(); else if(tab === 'logs') loadLogs();  else if(tab === 'users') loadAllUsers(); else if(tab === 'test') loadTestAccounts(); else if(tab === 'board') loadBoard(); else if(tab === 'quotes') loadQuotes(); }
+    }
+    function applyI18N() {
+        document.getElementById('t-pageTitle').innerText = T('pageTitle'); document.getElementById('t-logout').innerText = T('logout');
+        document.getElementById('t-tabStatus').innerText = T('tabStatus'); document.getElementById('t-tabLogs').innerText = T('tabLogs'); document.getElementById('t-tabUsers').innerText = T('tabUsers'); document.getElementById('t-tabTest').innerText = T('tabTest'); document.getElementById('t-tabBoard').innerText = T('tabBoard'); const ta = document.getElementById('t-tabApply'); if (ta) ta.innerText = T('tabApply');
+        const tq = document.getElementById('t-tabQuotes'); if (tq) tq.innerText = T('tabQuotes');
+        const qs = document.getElementById('t-quotesTitle'); if (qs) qs.innerText = T('quotesTitle');
+        const qa = document.getElementById('t-quoteAdd'); if (qa) qa.innerText = T('quoteAdd');
+        document.getElementById('t-statusTitle').innerText = T('statusTitle'); document.getElementById('t-today').innerText = T('today'); document.getElementById('t-tomorrow').innerText = T('tomorrow'); const tda = document.getElementById('t-dayAfter'); if (tda) tda.innerText = T('dayAfter');
+        document.getElementById('btn-zh').classList.toggle('on', lang === 'zh'); document.getElementById('btn-en').classList.toggle('on', lang === 'en');
+    }
+
+    document.querySelectorAll('.tabs button').forEach(b => {
+        b.onclick = () => {
+            if (b.dataset.applyfilter) { document.querySelectorAll('.tabs button[data-applyfilter]').forEach(x => x.classList.remove('on')); b.classList.add('on'); applyFilter = b.dataset.applyfilter; loadApplyRequests(); return; }
+            if (!b.dataset.tab) return; document.querySelectorAll('.tabs button[data-tab]').forEach(x => x.classList.remove('on')); b.classList.add('on');
+            const tab = b.dataset.tab; ['status','logs','users','test','board','quotes','apply'].forEach(t => { document.getElementById('panel-' + t).style.display = t === tab ? 'block' : 'none'; });
+            if (tab === 'status') loadStatus(); else if (tab === 'logs') loadLogs();  else if (tab === 'users') loadAllUsers(); else if (tab === 'test') loadTestAccounts(); else if (tab === 'board') loadBoard(); else if (tab === 'quotes') loadQuotes(); else if (tab === 'apply') loadApplyRequests();
+        };
+    });
+    document.querySelectorAll('.date-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('.date-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); boardDate = dateFromKey(b.dataset.date); loadBoard(); }; });
+    async function doLogout() { if (statusTimer) clearInterval(statusTimer); await fetch('/api/logout', { method: 'POST' }); location.replace('/?timeout=1'); }
+
+    // ================= 语录管理 =================
+    async function loadQuotes() {
+        const box = document.getElementById('quoteList');
+        if (!box) return;
+        box.innerHTML = '<div style="color:#94a3b8;font-size:13px">加载中…</div>';
+        try {
+            const res = await fetch('/api/admin/quotes?t=' + Date.now());
+            const d = await res.json();
+            if (!res.ok) { box.innerHTML = '<div style="color:#f87171;font-size:13px">' + escapeHtml(d.message || '加载失败') + '</div>'; return; }
+            const list = d.list || [];
+            if (!list.length) { box.innerHTML = '<div style="color:#94a3b8;font-size:13px">还没有语录，在上面添加一条吧。</div>'; return; }
+            box.innerHTML = list.map(q => `
+                <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,.04)">
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:14px;color:#e2e8f0;line-height:1.6;word-break:break-word">${escapeHtml(q.content)}</div>
+                        <div style="font-size:12px;color:#94a3b8;margin-top:4px">—— ${escapeHtml(q.author || '佚名')}${q.created_at ? ' · ' + String(q.created_at).slice(0, 10) : ''}</div>
+                    </div>
+                    <button onclick="delQuote(${Number(q.id)}, this)" style="background:#7f1d1d;border:1px solid #b91c1c;color:#fecaca;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap">删除</button>
+                </div>`).join('');
+        } catch (e) {
+            box.innerHTML = '<div style="color:#f87171;font-size:13px">网络异常，请稍后重试</div>';
+        }
+    }
+
+    async function addQuote() {
+        const contentEl = document.getElementById('quoteContent'), authorEl = document.getElementById('quoteAuthor');
+        const content = (contentEl.value || '').trim();
+        const author = (authorEl.value || '').trim();
+        if (!content) { showToast('请先填写语录内容', true); contentEl.focus(); return; }
+        const btn = document.getElementById('t-quoteAdd');
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/admin/quotes/add', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, author: author || '佚名' })
+            });
+            const d = await res.json();
+            if (!res.ok) { showToast(d.message || '添加失败', true); return; }
+            contentEl.value = ''; authorEl.value = '';
+            showToast('已添加，学生端会自动换一条');
+            loadQuotes();
+        } catch (e) {
+            showToast('网络异常，添加失败', true);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function delQuote(id, btn) {
+        if (!confirm('确定删除这条语录？删除后学生端不再展示。')) return;
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('/api/admin/quotes/delete', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const d = await res.json();
+            if (!res.ok) { showToast(d.message || '删除失败', true); if (btn) btn.disabled = false; return; }
+            showToast('已删除');
+            loadQuotes();
+        } catch (e) {
+            showToast('网络异常，删除失败', true);
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // 实时状态渲染
+    async function loadStatus() {
+        try {
+            const res = await fetch('/api/admin/server-status'); if(!res.ok) return; const d = await res.json();
+            const grid = document.getElementById('statusGrid');
+            const sysPercent = Number(d.memory.systemUsedPercent);
+            const dbOk = d.database.status === 'connected';
+            const dbClass = dbOk ? 'ok' : 'err';
+            const sysMemClass = sysPercent < 70 ? 'ok' : (sysPercent < 90 ? 'warn' : 'err');
+
+            grid.innerHTML = `
+                <div class="stat-card ok"><div class="label">${T('uptime')}</div><div class="value">${fmtUptime(d.server.uptimeSec)}</div><div class="sub">${T('startedAt')}: ${new Date(d.server.startedAt).toLocaleString()}</div></div>
+                <div class="stat-card ${dbClass}"><div class="label">${T('dbStatus')}</div><div class="value">${dbOk ? '✓ ' + T('connected') : '✗ ' + T('error')}</div><div class="sub">${T('dbLatency')}: ${d.database.latencyMs} ms</div></div>
+                <div class="stat-card ${sysMemClass}"><div class="label">${T('sysMemUsed')}</div><div class="value">${d.memory.systemUsedPercent}%</div><div class="progress ${sysMemClass === 'warn' ? 'warn' : (sysMemClass === 'err' ? 'err' : '')}"><div style="width:${d.memory.systemUsedPercent}%"></div></div><div class="sub">${fmtBytes(d.memory.systemTotal - d.memory.systemFree)} / ${fmtBytes(d.memory.systemTotal)}</div></div>
+                <div class="stat-card"><div class="label">${T('procMem')}</div><div class="value">${fmtBytes(d.memory.processRss)}</div><div class="sub">Heap: ${fmtBytes(d.memory.processHeapUsed)} / ${fmtBytes(d.memory.processHeapTotal)}</div></div>
+                <div class="stat-card"><div class="label">${T('cpuInfo')}</div><div class="value">${d.cpu.cores} ${T('cpuCores')}</div><div class="sub">${escapeHtml(d.cpu.model)}</div></div>
+                <div class="stat-card"><div class="label">${T('loadAvg')}</div><div class="value">${d.cpu.loadAvg.map(x=>x.toFixed(2)).join(' / ')}</div><div class="sub">1 / 5 / 15 min</div></div>
+                <div class="stat-card"><div class="label">${T('reqCount')}</div><div class="value">${d.server.requestCount}</div><div class="sub">${T('nodeVer')}: ${d.server.nodeVersion}</div></div>
+                <div class="stat-card"><div class="label">${T('platform')}</div><div class="value" style="font-size:14px">${d.server.platform}</div><div class="sub">${T('hostname')}: ${escapeHtml(d.server.hostname)}</div></div>
+                <div class="stat-card ok"><div class="label">${T('statBookings')} / ${T('statActive')}</div><div class="value">${d.stats.bookings} / ${d.stats.activeBookings}</div><div class="sub">${T('statPendingConfirm')}: ${d.stats.pendingConfirm} · ${T('statPendingScore')}: ${d.stats.pendingScore}</div></div>
+            `;
+            // 在线用户全部恢复中文显示
+            document.getElementById('onlineRow').innerHTML = `
+                <div style="width:100%;font-size:13px;color:#94a3b8;margin-bottom:4px">${T('onlineTitle')}</div>
+                <div class="online-badge">${T('roleStudent')}: ${d.online.student}</div>
+                <div class="online-badge">${T('roleTeacher')}: ${d.online.teacher}</div>
+                <div class="online-badge">${T('roleDirector')}: ${d.online.director}</div>
+                <div class="online-badge">${T('roleDean')}: ${d.online.dean}</div>
+                <div class="online-badge">${T('roleAdmin')}: ${d.online.admin}</div>
+            `;
+        } catch(e){}
+    }
+
+    async function loadLogs() {
+        const date = document.getElementById('logDate').value; const type = document.getElementById('logType').value;
+        let url = '/api/admin/logs?'; if (date) url += 'date=' + date + '&'; if (type) url += 'type=' + type;
+        const res = await fetch(url); if(!res.ok) return; const data = await res.json(); const tbody = document.getElementById('logList');
+        if(!data.list || !data.list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无日志</td></tr>'; return; }
+        tbody.innerHTML = data.list.map(l => `<tr><td>${l.created_at}</td><td>${escapeHtml(l.user_name)}</td><td>${l.user_role}</td><td>${escapeHtml(l.action)}</td><td>${escapeHtml(l.detail)}</td><td>${l.ip||'-'}</td></tr>`).join('');
+    }
+
+    async function loadAllUsers() {
+        const res = await fetch('/api/admin/all-users'); if(!res.ok) return; const u = (await res.json()).users; const wrap = document.getElementById('allUsersList');
+        const btnText = isSuper ? '重置密码' : '申请重置';
+        const render = (title, list, role) => {
+            if(!list || !list.length) return '';
+            const head = `<h3>${title}</h3><table><thead><tr><th>账号</th><th>姓名</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+            const rows = list.map(user => {
+                const locked = user.status === 'locked';
+                const statusText = locked ? '<span style="color:#f87171">已锁定</span>' : (user.status === 'disabled' ? '<span style="color:#9ca3af">已禁用</span>' : '<span style="color:#34d399">正常</span>');
+                let ops = `<button class="sm orange" onclick="resetPwd('${role}','${user.id}')">${btnText}</button>`;
+                // 仅系统管理员可以锁定/解锁管理员账号（admin 本人不可锁）
+                if (isSuper && role === 'admin' && user.id !== 'admin') {
+                    ops += locked
+                        ? ` <button class="sm green" onclick="setAccountStatus('${role}','${user.id}','active')">解锁</button>`
+                        : ` <button class="sm red" onclick="setAccountStatus('${role}','${user.id}','locked')">锁定</button>`;
+                }
+                return `<tr><td>${user.id}</td><td>${escapeHtml(user.name)}</td><td>${statusText}</td><td>${ops}</td></tr>`;
+            }).join('');
+            return head + rows + `</tbody></table>`;
+        };
+        wrap.innerHTML = render('👨‍🎓 学生', u.students, 'student') + render('👨‍🏫 教师', u.teachers, 'teacher') + render('📋 主任', u.directors, 'director') + render('🏛️ 三级院长', u.deans, 'dean') + render('⚙️ 管理员', u.admins, 'admin');
+    }
+    // 仅系统管理员：锁定/解锁账号（锁定后无法登录，已登录会话立即失效）
+    async function setAccountStatus(role, id, status) {
+        const lock = status === 'locked';
+        if (!confirm(lock
+            ? `确定锁定 ${id} 吗？\n锁定后该账号无法登录，已登录的会话会被强制退出，其提交的操作也不会生效。`
+            : `确定解锁 ${id} 吗？解锁后该账号可以正常登录。`)) return;
+        const res = await fetch('/api/admin/set-account-status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ role, targetId: id, status }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return showToast(data.message || '操作失败', true);
+        showToast(data.message || '操作成功'); loadAllUsers();
+    }
+    async function resetPwd(role, id) {
+        if (!isSuper) return applyResetPwd(role, id);   // 普通管理员只能提交申请
+        const newPwd = prompt('请输入新密码（至少6位）');
+        if (!newPwd || newPwd.length < 6) return alert('密码太短');
+        const res = await fetch('/api/admin/reset-password', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ role, targetId: id, newPassword: newPwd }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return showToast(data.message || '重置失败', true);
+        showToast('重置成功');
+    }
+
+    // 普通管理员：提交重置密码申请，等 admin 审批后才生效
+    async function applyResetPwd(role, id) {
+        const newPwd = prompt('请输入期望的新密码（至少 6 位）\n提交后需等系统管理员 admin 审批通过才会生效');
+        if (!newPwd) return;
+        if (newPwd.length < 6) return alert('密码太短');
+        const reason = prompt('请填写申请原因（例如：学生忘记密码，班长已核实身份）');
+        if (!reason || !reason.trim()) return alert('请填写申请原因');
+        const res = await fetch('/api/admin/apply-action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ actionType: 'reset_password', targetRole: role, targetId: id, newPassword: newPwd, reason }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return showToast(data.message || '提交失败', true);
+        showToast('申请已提交，等待 admin 审批');
+        if (document.querySelector('.tabs button[data-tab].on')?.dataset.tab === 'apply') loadApplyRequests();
+    }
+
+    async function loadApplyRequests() {
+        const wrap = document.getElementById('applyList'); if (!wrap) return;
+        const hint = document.getElementById('applyHint');
+        if (hint) hint.innerText = isSuper
+            ? '这里汇总其他管理员的申请：重置密码点「通过并执行」立即生效；测试身份切换点「批准」发一次性授权，申请人 24 小时内可进入一次。'
+            : '您的操作不会立即生效：需先提交申请，由系统管理员 admin 审批通过后才执行。';
+        const res = await fetch('/api/admin/action-requests?filter=' + applyFilter);
+        if (!res.ok) { wrap.innerHTML = '<div class="empty">加载失败，请重试</div>'; return; }
+        const data = await res.json(); const list = data.list || [];
+        if (!list.length) { wrap.innerHTML = '<div class="empty">' + (applyFilter === 'pending' ? '暂无待处理申请' : '暂无历史记录') + '</div>'; return; }
+        wrap.innerHTML = '';
+        list.forEach(r => {
+            const div = document.createElement('div'); div.className = 'item';
+            const typeMap = { reset_password: '重置密码', impersonate: '切换测试身份' };
+            const typeText = typeMap[r.action_type] || r.action_type;
+            const used = r.action_type === 'impersonate' && r.used_at;
+            const color = r.status === 'pending' ? '#fbbf24' : (r.status === 'approved' ? (used ? '#94a3b8' : '#34d399') : '#f87171');
+            const statusText = r.status === 'pending' ? '待审批'
+                : (r.status === 'approved' ? (used ? '已使用' : (r.action_type === 'impersonate' ? '已批准 · 待进入' : '已通过')) : '已拒绝');
+            let actions = '';
+            if (r.status === 'pending' && isSuper) {
+                const okText = r.action_type === 'impersonate' ? '批准（授权一次）' : '通过并执行';
+                actions = `<div class="bar" style="margin-top:10px"><input id="ac-${r.id}" placeholder="审批意见" style="flex:1"><button class="sm green" onclick="reviewApply(${r.id},'approve')">${okText}</button><button class="sm red" onclick="reviewApply(${r.id},'reject')">拒绝</button></div>`;
+            } else if (r.status === 'pending') {
+                actions = `<div class="desc" style="color:#fbbf24">等待系统管理员 admin 审批</div>`;
+            } else if (r.action_type === 'impersonate' && r.status === 'approved' && !used) {
+                actions = `<div class="desc" style="color:#34d399">已批准：请到「测试模块」点「进入（已批准）」，一次性有效，24 小时内使用</div>`;
+            }
+            div.innerHTML = `<div class="title">${typeText} · ${escapeHtml(r.target_name || r.target_id)}（${escapeHtml(r.target_role)}:${escapeHtml(r.target_id)}）<span style="margin-left:6px;font-size:12px;color:${color}">${statusText}</span></div>`
+                + `<div class="desc">申请人：${escapeHtml(r.apply_admin_name || r.apply_admin_id)} · ${r.created_at || ''}</div>`
+                + `<div class="desc">原因：${escapeHtml(r.reason || '')}</div>`
+                + (r.new_password ? `<div class="desc">期望新密码：<b>${escapeHtml(r.new_password)}</b></div>` : '')
+                + (r.review_comment ? `<div class="desc">审批意见：${escapeHtml(r.review_comment)}</div>` : '')
+                + (r.used_at ? `<div class="desc">使用时间：${r.used_at}</div>` : '')
+                + actions;
+            wrap.appendChild(div);
+        });
+    }
+
+    async function reviewApply(id, action) {
+        const comment = document.getElementById('ac-' + id)?.value || '';
+        const res = await fetch('/api/admin/review-action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ requestId: id, action, comment }) });
+        const data = await res.json().catch(() => ({}));
+        showToast(res.ok ? (data.message || '已处理') : (data.message || '操作失败'), !res.ok);
+        loadApplyRequests();
+    }
+
+    async function loadTestAccounts() {
+        const res = await fetch('/api/admin/test-accounts');
+        if (!res.ok) { document.getElementById('testAccounts').innerHTML = '<div class="empty">加载失败，请刷新重试</div>'; return; }
+        const data = await res.json(), a = data.accounts, wrap = document.getElementById('testAccounts');
+        const isSup = !!data.isSuper, reqs = data.myRequests || [];
+        const pendingMap = {}, approvedMap = {};
+        reqs.forEach(r => {
+            const k = r.target_role + '|' + r.target_id;
+            if (r.status === 'pending') pendingMap[k] = r;
+            else if (r.status === 'approved' && !r.used_at) approvedMap[k] = r;   // 一次性授权，未使用才可用
+        });
+        const tip = document.createElement('div');
+        tip.className = 'desc';
+        tip.style.cssText = 'margin-bottom:10px;color:#fbbf24';
+        tip.innerText = isSup
+            ? '您是系统管理员，可直接切换任意账户；切换后右上角会出现「返回管理端」。'
+            : '切换测试身份需要先提交申请：选好账号点「申请切换」并填写原因，等系统管理员 admin 批准后，再回来点「进入（已批准）」。授权一次性有效，24 小时内使用。';
+        const render = (title, list, role) => {
+            if (!list || !list.length) return '';
+            return `<h3>${title}</h3><table><thead><tr><th>ID</th><th>姓名</th><th>操作</th></tr></thead><tbody>` + list.map(u => {
+                const k = role + '|' + u.id;
+                let op;
+                if (isSup) op = `<button class="sm" onclick="impersonate('${role}','${u.id}')">进入</button>`;
+                else if (approvedMap[k]) op = `<button class="sm green" onclick="impersonate('${role}','${u.id}',${approvedMap[k].id})">进入（已批准）</button>`;
+                else if (pendingMap[k]) op = '<span class="desc" style="color:#fbbf24">待审批</span>';
+                else op = `<button class="sm orange" onclick="applyImpersonate('${role}','${u.id}')">申请切换</button>`;
+                return `<tr><td>${u.id}</td><td>${escapeHtml(u.name)}</td><td>${op}</td></tr>`;
+            }).join('') + `</tbody></table>`;
+        };
+        wrap.innerHTML = '';
+        wrap.appendChild(tip);
+        wrap.insertAdjacentHTML('beforeend', render('👨‍🎓 学生', a.students, 'student') + render('👨‍🏫 教师', a.teachers, 'teacher') + render('📋 主任', a.directors, 'director') + render('🏛️ 三级院长', a.deans, 'dean'));
+    }
+
+    // 二级管理员：提交切换测试身份申请
+    async function applyImpersonate(role, id) {
+        const reason = prompt('请输入申请原因（例如：排查学生选课页面显示异常，需要进入该账号复现）');
+        if (!reason || !reason.trim()) return alert('请填写申请原因');
+        const res = await fetch('/api/admin/apply-action', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ actionType: 'impersonate', targetRole: role, targetId: id, reason }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return showToast(data.message || '提交失败', true);
+        showToast(data.message || '申请已提交'); loadTestAccounts();
+    }
+
+    // 注意这里的延迟跳转，防止闪屏
+    async function impersonate(role, id, requestId) {
+        if (!confirm(requestId ? '使用本次授权进入该账号？（授权将立即作废）' : '确定切换身份？')) return;
+        const body = { targetRole: role, targetId: id };
+        if (requestId) body.requestId = requestId;
+        const res = await fetch('/api/admin/impersonate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json(); if (!res.ok) { alert(data.message); if (res.status === 403 || res.status === 400) loadTestAccounts(); return; }
+        setTimeout(() => { location.replace(data.redirect); }, 200);
+    }
+
+    async function loadBoard() {
+        if (!user) return; let college = document.getElementById('collegeInput').value.trim() || '计算机学院';
+        const res = await fetch('/api/board?college=' + encodeURIComponent(college) + '&date=' + boardDate); const data = await res.json(); const wrap = document.getElementById('board'); wrap.innerHTML = '';
+        data.board.forEach(roomData => {
+            const col = document.createElement('div'); col.className = 'room-col'; col.innerHTML = '<h3>' + T('room') + ' ' + roomData.room + '</h3>' + (roomData.location ? '<div class="room-loc" title="' + escapeHtml(roomData.location) + '">📍 ' + escapeHtml(roomData.location) + '</div>' : '');
+            roomData.slots.forEach(slot => {
+                const div = document.createElement('div'); let cls, statusText;
+                if (slot.status === 'available') { cls = 'available'; statusText = T('free'); } else if (slot.status === 'booked' && slot.booking) { cls = 'booked'; statusText = T('bookedBy') + ' · ' + slot.booking.studentName; } else { cls = 'unavailable'; statusText = slot.nightClosed ? T('nightClosed') : T('unavailable'); }
+                div.className = 'slot ' + cls; div.innerHTML = '<div class="time">' + slot.startTime + ' - ' + slot.endTime + '</div><div class="status">' + statusText + '</div>'; col.appendChild(div);
+            });
+            wrap.appendChild(col);
+        });
+    }
+
+    // ==========================================
+    // 终极防闪屏初始化逻辑
+    // ==========================================
+    (async () => {
+        try {
+            const meRes = await fetch('/api/me?t=' + Date.now());
+
+            if (!meRes.ok) {
+                window.location.replace('/?timeout=1');
+                return;
+            }
+
+            const meData = await meRes.json();
+            user = meData.user;
+
+            if (user.role !== 'admin') {
+                window.location.replace('/?timeout=1');
+                return;
+            }
+
+            // 权限区分：只有 admin 可直接改数据，其他管理员只能提交申请
+            isSuper = !!user.isSuper;
+
+            // 正常渲染
+            document.getElementById('userInfo').innerText = user.name + ' · ' + user.id;
+            document.getElementById('collegeInput').value = '计算机学院';
+            document.getElementById('logDate').value = getToday();
+            applyI18N();
+
+            if (!isSuper) {
+                const uh = document.querySelector('#panel-users h2');
+                if (uh) uh.innerText = '用户管理 · 提交重置密码申请';
+                const up = document.querySelector('#panel-users p');
+                if (up) up.innerText = '您不是系统管理员：点「申请重置」会提交申请，需 admin 审批通过后密码才会被重置（对方下次登录仍需改密）。';
+                // 测试模块对二级管理员开放，但每次进入需先提交申请并由 admin 批准
+                const hint = document.getElementById('applyHint');
+                if (hint) hint.innerText = '您的操作不会立即生效：需先提交申请，由系统管理员 admin 审批通过后才执行。';
+            } else {
+                const uh = document.querySelector('#panel-users h2');
+                if (uh) uh.innerText = '用户管理 · 重置密码';
+            }
+
+            await loadStatus();
+
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.remove();
+
+            // 恢复 10 秒自动静默刷新
+            statusTimer = setInterval(() => {
+                if (document.hidden) return;
+                if (document.querySelector('.tabs button[data-tab].on')?.dataset.tab === 'status') loadStatus();
+            }, 10000);
+
+        } catch (e) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.innerText = "网络异常，请刷新重试";
+        }
+    })();
+</script>
+
+<!-- ===== 联系管理员（点击复制邮箱） ===== -->
+<style>
+  #caFab { position: fixed; right: 12px; bottom: 12px; z-index: 9000; background: rgba(30,41,59,.94); color: #e2e8f0;
+           border: 1px solid rgba(148,163,184,.45); border-radius: 999px; padding: 8px 13px; font-size: 12px; line-height: 1;
+           cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); font-family: inherit; }
+  #caFab:active { transform: scale(.97); }
+  #caMask { position: fixed; inset: 0; background: rgba(0,0,0,.65); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            z-index: 99998; display: none; align-items: center; justify-content: center; padding: 16px; }
+  #caBox { width: 100%; max-width: 380px; background: #1b1130; border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+           padding: 20px; color: #e2e8f0; box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+  #caBox h3 { font-size: 16px; margin: 0 0 12px; color: #f8fafc; }
+  #caMailBtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px;
+               background: rgba(59,130,246,.14); border: 1px solid rgba(59,130,246,.5); border-radius: 10px; color: #93c5fd;
+               font-size: 14px; cursor: pointer; font-family: inherit; }
+  #caMailBtn.copied { border-color: #34d399; background: rgba(52,211,153,.14); }
+  #caCopyTip { font-size: 11px; color: #cbd5e1; background: rgba(255,255,255,.12); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  #caBox .ca-note { font-size: 12px; line-height: 1.7; color: #94a3b8; margin-top: 10px; }
+  #caBox .ca-note b { color: #e2e8f0; }
+  #caBox .ca-close { width: 100%; margin-top: 14px; padding: 9px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+                     border-radius: 8px; color: #cbd5e1; font-size: 13px; cursor: pointer; font-family: inherit; }
+  #caToast { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: rgba(5,150,105,.96); color: #fff;
+             padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 100001; display: none; max-width: 80vw; text-align: center; }
+</style>
+<div id="caFab" onclick="caOpen()">✉️ 联系管理员</div>
+<div id="caMask" onclick="if(event.target===this)caClose()">
+  <div id="caBox">
+    <h3>✉️ 联系管理员</h3>
+    <button type="button" id="caMailBtn" onclick="caCopy()">
+      <span id="caMailText">ranliu6953@163.com</span>
+      <span id="caCopyTip">点击复制</span>
+    </button>
+    <div class="ca-note">
+      邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：
+      出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。
+    </div>
+    <button type="button" class="ca-close" onclick="caClose()">关闭</button>
+  </div>
+</div>
+<div id="caToast"></div>
+<script>
+(function () {
+  var EMAIL = 'ranliu6953@163.com';
+  function toast(msg) {
+    var t = document.getElementById('caToast'); if (!t) return;
+    t.innerText = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2000);
+  }
+  function markCopied() {
+    var b = document.getElementById('caMailBtn'), tip = document.getElementById('caCopyTip');
+    if (b) { b.classList.add('copied'); setTimeout(function () { b.classList.remove('copied'); }, 2200); }
+    if (tip) { tip.innerText = '已复制'; setTimeout(function () { tip.innerText = '点击复制'; }, 2200); }
+    toast('邮箱已复制：' + EMAIL);
+  }
+  window.caOpen = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'flex'; };
+  window.caClose = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'none'; };
+  window.caCopy = function () {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = EMAIL; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, EMAIL.length);
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { markCopied(); return; }
+      var el = document.getElementById('caMailText');
+      if (el) { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('复制失败，请长按选中的邮箱手动复制');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(EMAIL).then(markCopied).catch(fallback);
+    } else { fallback(); }
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') caClose(); });
+})();
+</script>
+</body>
+</html>

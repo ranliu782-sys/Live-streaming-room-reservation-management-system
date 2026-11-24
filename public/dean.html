@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dean - Live Practice</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #120822 0%, #1e1038 50%, #0f071f 100%); padding: 20px; color: #cbd5e1; min-height: 100vh; position: relative; }
+        .watermark-logo { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 820px; height: 820px; mix-blend-mode: screen; opacity: 0.1; z-index: -1; pointer-events: none; object-fit: contain; filter: drop-shadow(0 0 24px rgba(96, 165, 250, 0.4)) brightness(1.1) blur(2px); }
+        .wrap { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+        .card { background: rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+        h1 { font-size: 22px; margin-bottom: 6px; color: #fff; } h2 { font-size: 16px; margin-bottom: 12px; color: #e2e8f0; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; } .info { font-size: 13px; color: #94a3b8; } .right-bar { display: flex; gap: 10px; align-items: center; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; } .tabs button { padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 8px; cursor: pointer; font-size: 14px; color: #cbd5e1; } .tabs button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .date-bar { display: flex; gap: 8px; margin-bottom: 12px; } .date-bar button { flex: 1; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; border-radius: 6px; cursor: pointer; font-size: 13px; color: #cbd5e1; } .date-bar button.on { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; } .room-col { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); } .room-col h3 { font-size: 15px; text-align: center; margin-bottom: 4px; color: #fff; } .room-col .room-loc { font-size: 11px; line-height: 1.4; text-align: center; color: #93c5fd; margin-bottom: 10px; padding: 0 2px; word-break: break-all; }
+        .slot { border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; margin-bottom: 8px; font-size: 13px; text-align: center; } .slot.available { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); } .slot.booked { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.1); cursor: pointer; } .slot.unavailable { border-color: rgba(100,116,139,0.3); background: rgba(100,116,139,0.1); color: #64748b; } .slot .time { font-weight: 600; color: #fff; } .slot .status { margin-top: 4px; color: #94a3b8; font-size: 12px; } .slot.booked .status { color: #fca5a5; }
+        .item { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: rgba(0,0,0,0.2); } .item .title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #fff; }
+        .desc { font-size: 13px; color: #cbd5e1; margin: 4px 0; line-height: 1.7; }
+        button.sm { padding: 6px 12px; font-size: 13px; border-radius: 5px; border: none; cursor: pointer; background: #3b82f6; color: #fff; } button.sm.green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.4); } button.sm.red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+        .toast { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 100000; font-size: 14px; } .toast.ok { background: rgba(5,150,105,0.9); } .toast.err { background: rgba(220,38,38,0.9); }
+        #loadingOverlay { position: fixed; inset: 0; background: #0f071f; z-index: 999999; display: flex; justify-content: center; align-items: center; font-size: 16px; color: #94a3b8; }
+        @media (max-width: 768px) { body { padding: 10px; } .topbar { flex-direction: column; align-items: flex-start; gap: 10px; } .board { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div id="loadingOverlay">正在加载数据...</div>
+<img class="watermark-logo" src="/logo.png" alt="水印">
+
+<div class="wrap">
+    <div class="card">
+        <div class="topbar">
+            <div><h1>🏛️ 三级院长端 · 直播实践管理</h1><div class="info" id="userInfo"></div></div>
+            <div class="right-bar">
+                <a href="javascript:void(0)" onclick="doLogout()" style="font-size:14px;text-decoration:none;color:#60a5fa;">← 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="on" data-tab="board">看板</button>
+        <button data-tab="pending">待审批改分</button>
+    </div>
+
+    <div class="card" id="panel-board">
+        <h2>本学院直播间看板</h2>
+        <div class="date-bar">
+            <button class="date-btn on" data-date="today">今天</button>
+            <button class="date-btn" data-date="tomorrow">明天</button>
+            <button class="date-btn" data-date="dayafter">后天</button>
+        </div>
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="card" id="panel-pending" style="display:none">
+        <h2>待审批 · 教师改分申请</h2>
+        <div id="pendingList"></div>
+    </div>
+</div>
+
+<script>
+    let user = null; let boardDate = getToday();
+    function getToday() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getTomorrow() { const d = new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function getDayAfter() { const d = new Date(); d.setDate(d.getDate()+2); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function dateFromKey(k) { return k === 'tomorrow' ? getTomorrow() : (k === 'dayafter' ? getDayAfter() : getToday()); }
+    function showToast(msg, isErr) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast ' + (isErr ? 'err' : 'ok'); t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500); }
+    function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    document.querySelectorAll('.tabs button').forEach(b => { b.onclick = () => { document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on'); const tab = b.dataset.tab; document.getElementById('panel-board').style.display = tab === 'board' ? 'block' : 'none'; document.getElementById('panel-pending').style.display = tab === 'pending' ? 'block' : 'none'; if (tab === 'board') loadBoard(); else loadPending(); }; });
+    document.querySelectorAll('.date-btn').forEach(b => { b.onclick = () => { document.querySelectorAll('.date-btn').forEach(x => x.classList.remove('on')); b.classList.add('on'); boardDate = dateFromKey(b.dataset.date); loadBoard(); }; });
+    async function doLogout() { await fetch('/api/logout', { method: 'POST' }); location.replace('/?timeout=1'); }
+
+    async function loadBoard() {
+        const res = await fetch('/api/board?college=' + encodeURIComponent(user.college) + '&date=' + boardDate); const data = await res.json();
+        const wrap = document.getElementById('board'); wrap.innerHTML = '';
+        data.board.forEach(roomData => {
+            const col = document.createElement('div'); col.className = 'room-col'; col.innerHTML = '<h3>直播间 ' + roomData.room + '</h3>' + (roomData.location ? '<div class="room-loc" title="' + escapeHtml(roomData.location) + '">📍 ' + escapeHtml(roomData.location) + '</div>' : '');
+            roomData.slots.forEach(slot => {
+                const div = document.createElement('div'); let cls, statusText;
+                if (slot.status === 'available') { cls = 'available'; statusText = '空闲'; } else if (slot.status === 'booked') { cls = 'booked'; statusText = '已被约 · ' + slot.booking.studentName; } else { cls = 'unavailable'; statusText = slot.nightClosed ? '夜间不开放' : '不可预约'; }
+                div.className = 'slot ' + cls; div.innerHTML = '<div class="time">' + slot.startTime + ' - ' + slot.endTime + '</div><div class="status">' + statusText + '</div>'; col.appendChild(div);
+            });
+            wrap.appendChild(col);
+        });
+    }
+
+    async function loadPending() {
+        const res = await fetch('/api/approver/pending-changes?college=' + encodeURIComponent(user.college));
+        const data = await res.json();
+        const wrap = document.getElementById('pendingList');
+        if (data.list.length === 0) { wrap.innerHTML = '<div class="desc">暂无待审批</div>'; return; }
+        wrap.innerHTML = '';
+
+        data.list.forEach(r => {
+            const div = document.createElement('div'); div.className = 'item';
+            const sName = r.student_name || r.student_no || '未知学生';
+            const oScore = (r.old_score !== null && r.old_score !== undefined) ? r.old_score : '无';
+
+            div.innerHTML = `
+                <div class="title">${escapeHtml(sName)} · ${r.room || '未知房间'} · ${r.date || ''} ${r.st || ''}</div>
+                <div class="desc">原分数: ${oScore} → 新分数: <span style="color:#fcd34d">${r.new_score}</span></div>
+                <div class="desc">原因: ${escapeHtml(r.reason)}</div>
+                <div style="margin-top:8px">
+                    <button class="sm green" onclick="review(${r.id},'approve')">同意</button>
+                    <button class="sm red" onclick="review(${r.id},'reject')">拒绝</button>
+                </div>`;
+            wrap.appendChild(div);
+        });
+    }
+
+    async function review(id, action) { await fetch('/api/approver/review-change', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId: id, action }) }); showToast('操作成功'); loadPending(); }
+
+    function checkImpersonating(imp) {
+        if (!imp || !imp.byAdmin) return;
+        const old = document.getElementById('impersonateBar');
+        if (old) old.remove();
+        const div = document.createElement('div');
+        div.id = 'impersonateBar';
+        div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#78350f;padding:10px;z-index:99999;display:flex;justify-content:space-between;align-items:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);gap:10px;flex-wrap:wrap';
+        div.innerHTML = `<span>⚠️ 测试模式：<b>${user.name}</b></span><div style="display:flex;gap:8px"><button onclick="openImpersonatePicker()" style="padding:4px 10px;background:#1e3a8a;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">切换</button><button onclick="restoreAdmin()" style="padding:4px 10px;background:#78350f;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">返回</button></div>`;
+        document.body.appendChild(div);
+    }
+
+    async function restoreAdmin() {
+        const res = await fetch('/api/admin/restore', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) { alert(data.message); return; }
+        location.href = data.redirect + '?t=' + Date.now();
+    }
+
+    async function openImpersonatePicker() {
+        const old = document.getElementById('impersonatePickerModal'); if (old) old.remove();
+        const res = await fetch('/api/admin/test-accounts');
+        if (!res.ok) { alert('无法加载'); return; }
+        const data = await res.json();
+        const a = data.accounts;
+        function makeOptions(list, role, roleLabel) { if (!list || list.length === 0) return ''; return `<optgroup label="${roleLabel}">` + list.map(u => `<option value="${role}|${u.id}">${u.name || ''}（${u.id}）</option>`).join('') + `</optgroup>`; }
+        const html = `<div class="modal" id="impersonatePickerModal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100000;padding:10px;"><div style="background:#1e1038;border:1px solid rgba(255,255,255,0.2);border-radius:16px;padding:24px;width:100%;max-width:500px;"><h3 style="margin-bottom:14px;color:#fff;">切换测试身份</h3><div style="margin-bottom:16px;"><label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">选择账户</label><select id="impersonateSelect" style="width:100%;padding:10px;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:16px;background:rgba(0,0,0,0.3);color:#fff;">${makeOptions(a.students, 'student', '👨‍🎓 学生')}${makeOptions(a.teachers, 'teacher', '👨‍🏫 教师')}${makeOptions(a.directors, 'director', '📋 主任')}${makeOptions(a.deans, 'dean', '🏛️ 三级院长')}</select></div><div style="display:flex;justify-content:flex-end;gap:10px;"><button onclick="document.getElementById('impersonatePickerModal').remove()" style="padding:6px 12px;background:rgba(255,255,255,0.1);color:#cbd5e1;border:1px solid rgba(255,255,255,0.2);border-radius:6px;cursor:pointer;">取消</button><button onclick="doImpersonateSwitch()" style="padding:6px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;">切换</button></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function doImpersonateSwitch() {
+        const val = document.getElementById('impersonateSelect').value; if (!val) return;
+        const [targetRole, targetId] = val.split('|');
+        const res = await fetch('/api/admin/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetRole, targetId }) });
+        const data = await res.json();
+        if (!res.ok) { alert(data.message); return; }
+        setTimeout(() => { location.href = data.redirect + '?t=' + Date.now(); }, 800);
+    }
+
+    (async () => {
+        try {
+            const meRes = await fetch('/api/me?t=' + Date.now());
+            if (!meRes.ok) { window.location.replace('/?timeout=1'); return; }
+            const meData = await meRes.json(); user = meData.user;
+            if (user.role !== 'dean') { window.location.replace('/?timeout=1'); return; }
+            checkImpersonating(meData.impersonating);
+            document.getElementById('userInfo').innerText = user.name + ' · ' + user.college + ' · ' + user.id;
+            await loadBoard();
+            document.getElementById('loadingOverlay').remove();
+        } catch(e) { document.getElementById('loadingOverlay').innerText = '网络错误'; }
+    })();
+</script>
+
+<!-- ===== 联系管理员（点击复制邮箱） ===== -->
+<style>
+  #caFab { position: fixed; right: 12px; bottom: 12px; z-index: 9000; background: rgba(30,41,59,.94); color: #e2e8f0;
+           border: 1px solid rgba(148,163,184,.45); border-radius: 999px; padding: 8px 13px; font-size: 12px; line-height: 1;
+           cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); font-family: inherit; }
+  #caFab:active { transform: scale(.97); }
+  #caMask { position: fixed; inset: 0; background: rgba(0,0,0,.65); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            z-index: 99998; display: none; align-items: center; justify-content: center; padding: 16px; }
+  #caBox { width: 100%; max-width: 380px; background: #1b1130; border: 1px solid rgba(255,255,255,.18); border-radius: 14px;
+           padding: 20px; color: #e2e8f0; box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+  #caBox h3 { font-size: 16px; margin: 0 0 12px; color: #f8fafc; }
+  #caMailBtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px;
+               background: rgba(59,130,246,.14); border: 1px solid rgba(59,130,246,.5); border-radius: 10px; color: #93c5fd;
+               font-size: 14px; cursor: pointer; font-family: inherit; }
+  #caMailBtn.copied { border-color: #34d399; background: rgba(52,211,153,.14); }
+  #caCopyTip { font-size: 11px; color: #cbd5e1; background: rgba(255,255,255,.12); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  #caBox .ca-note { font-size: 12px; line-height: 1.7; color: #94a3b8; margin-top: 10px; }
+  #caBox .ca-note b { color: #e2e8f0; }
+  #caBox .ca-close { width: 100%; margin-top: 14px; padding: 9px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+                     border-radius: 8px; color: #cbd5e1; font-size: 13px; cursor: pointer; font-family: inherit; }
+  #caToast { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); background: rgba(5,150,105,.96); color: #fff;
+             padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 100001; display: none; max-width: 80vw; text-align: center; }
+</style>
+<div id="caFab" onclick="caOpen()">✉️ 联系管理员</div>
+<div id="caMask" onclick="if(event.target===this)caClose()">
+  <div id="caBox">
+    <h3>✉️ 联系管理员</h3>
+    <button type="button" id="caMailBtn" onclick="caCopy()">
+      <span id="caMailText">ranliu6953@163.com</span>
+      <span id="caCopyTip">点击复制</span>
+    </button>
+    <div class="ca-note">
+      邮件发出后 <b>48 小时内</b>处理。为便于定位，请在邮件中<b>详细说明遇到的问题和触发过程</b>：
+      出现在哪个页面、点了哪些按钮、页面提示了什么，如有报错请附上截图。
+    </div>
+    <button type="button" class="ca-close" onclick="caClose()">关闭</button>
+  </div>
+</div>
+<div id="caToast"></div>
+<script>
+(function () {
+  var EMAIL = 'ranliu6953@163.com';
+  function toast(msg) {
+    var t = document.getElementById('caToast'); if (!t) return;
+    t.innerText = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2000);
+  }
+  function markCopied() {
+    var b = document.getElementById('caMailBtn'), tip = document.getElementById('caCopyTip');
+    if (b) { b.classList.add('copied'); setTimeout(function () { b.classList.remove('copied'); }, 2200); }
+    if (tip) { tip.innerText = '已复制'; setTimeout(function () { tip.innerText = '点击复制'; }, 2200); }
+    toast('邮箱已复制：' + EMAIL);
+  }
+  window.caOpen = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'flex'; };
+  window.caClose = function () { var m = document.getElementById('caMask'); if (m) m.style.display = 'none'; };
+  window.caCopy = function () {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = EMAIL; ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, EMAIL.length);
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { markCopied(); return; }
+      var el = document.getElementById('caMailText');
+      if (el) { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('复制失败，请长按选中的邮箱手动复制');
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(EMAIL).then(markCopied).catch(fallback);
+    } else { fallback(); }
+  };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') caClose(); });
+})();
+</script>
+</body>
+</html>
